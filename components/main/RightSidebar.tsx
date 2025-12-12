@@ -1,17 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import TimelineView from '@/components/TimelineView';
 import { ReportStatus, ReportWithRelations, Task } from '@/types';
 import { mockReportsWithRelations } from '@/lib/mock-data';
 import { Plus } from 'lucide-react';
 
 interface RightSidebarProps {
-  onCreateReport?: () => void;
   onTaskClick?: (task: Task) => void;
 }
 
-export default function RightSidebar({ onCreateReport, onTaskClick }: RightSidebarProps) {
+export default function RightSidebar({ onTaskClick }: RightSidebarProps) {
+  const router = useRouter();
   const [reports] = useState<ReportWithRelations[]>(mockReportsWithRelations);
   const [filterStatus, setFilterStatus] = useState<ReportStatus | 'all'>('all');
 
@@ -44,17 +45,22 @@ export default function RightSidebar({ onCreateReport, onTaskClick }: RightSideb
     }
   };
 
+  const handleCreateReport = () => {
+    // Navigate to create report page instead of opening modal
+    router.push('/reports/create');
+  };
+
   return (
-    <div className="xl:col-span-1 bg-gradient-to-br from-gray-200 to-gray-200 px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 flex flex-col gap-4 sm:gap-5 md:gap-6">
+    <div className="bg-gradient-to-br from-gray-200 to-gray-200 px-4 sm:px-5 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 flex flex-col gap-4 sm:gap-5 md:gap-6 h-full">
 
       {/* Create New Report Card */}
       <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-xl">
         <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Quick Actions</h3>
         <button
-          onClick={onCreateReport}
-          className="w-full bg-white text-blue-600 hover:bg-blue-50 px-4 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-semibold transition-all flex items-center justify-center gap-2 shadow-md"
+          onClick={handleCreateReport}
+          className="w-full bg-white text-blue-700 hover:bg-blue-50 px-4 py-3 rounded-lg sm:rounded-xl text-sm sm:text-base font-semibold transition-all flex items-center justify-center gap-2 shadow-md active:scale-[0.98]"
         >
-          <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+          <Plus className="w-5 h-5 sm:w-5 sm:h-5" />
           Create New Report
         </button>
       </div>
@@ -78,8 +84,8 @@ export default function RightSidebar({ onCreateReport, onTaskClick }: RightSideb
       </div>
 
       {/* Recent Reports Timeline */}
-      <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 overflow-hidden flex flex-col flex-1">
-        <div className="p-3 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 overflow-hidden flex flex-col flex-1 min-h-0">
+        <div className="p-3 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white flex-shrink-0">
           <div className="flex items-center justify-between">
             <h3 className="text-base sm:text-lg font-semibold text-gray-800">Recent Reports</h3>
             <span className="bg-blue-100 text-blue-700 px-2.5 sm:px-3 py-1 rounded-full text-xs font-semibold">
@@ -88,7 +94,7 @@ export default function RightSidebar({ onCreateReport, onTaskClick }: RightSideb
           </div>
         </div>
 
-        <div className="max-h-[500px] sm:max-h-[600px] md:max-h-[700px] lg:max-h-[800px] overflow-y-auto p-3 sm:p-4">
+        <div className="overflow-y-auto p-3 sm:p-4 flex-1 min-h-0">
           <TimelineView tasks={tasksFromReports} onTaskClick={handleTaskClick} />
         </div>
       </div>

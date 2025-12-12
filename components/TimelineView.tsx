@@ -2,8 +2,8 @@
 
 import { Task } from '@/types';
 import StatusBadge from './StatusBadge';
-import PriorityBadge from './PriorityBadge';
-import CompletionLevelBadge from './CompletionLevelBadge';
+import PriorityBadge from './ui/PriorityBadge';
+import CompletionLevelBadge from './ui/CompletionLevelBadge';
 import { Calendar, User, Building2 } from 'lucide-react';
 
 interface TimelineViewProps {

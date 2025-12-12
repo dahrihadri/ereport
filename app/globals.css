@@ -37,3 +37,57 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
+
+/* Ensure form inputs and textareas have readable text */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="date"],
+input[type="time"],
+textarea,
+select {
+  color: #111827 !important; /* gray-900 */
+  font-size: 1rem !important; /* 16px base font size for better readability */
+  background-color: #ffffff !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280 !important; /* gray-500 for better contrast */
+  opacity: 1 !important;
+}
+
+/* Ensure option elements in selects are readable */
+option {
+  color: #111827 !important;
+  background-color: #ffffff !important;
+}
+
+/* Hide scrollbar while maintaining scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* Smooth scrolling for overflow containers */
+.overflow-x-auto,
+.overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Prevent layout shift on content load */
+.transition-all {
+  will-change: auto;
+}
+
+/* Fix for tooltip z-index issues */
+.tooltip {
+  z-index: 9999;
+}

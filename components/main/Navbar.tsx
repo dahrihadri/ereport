@@ -273,18 +273,30 @@ export default function Navbar({ user }: NavbarProps) {
                       <p className="text-sm font-semibold text-gray-800">{user?.name}</p>
                       <p className="text-xs text-gray-500 mt-0.5">{user?.email}</p>
                     </div>
-                    <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                    <Link
+                      href="/profile"
+                      onClick={() => setShowUserMenu(false)}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
                       <User className="w-4 h-4" />
                       Profile Settings
-                    </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                    </Link>
+                    <Link
+                      href="/tasks"
+                      onClick={() => setShowUserMenu(false)}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
                       <ClipboardList className="w-4 h-4" />
                       My Tasks
-                    </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                    </Link>
+                    <Link
+                      href="/settings"
+                      onClick={() => setShowUserMenu(false)}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
                       <Settings className="w-4 h-4" />
                       Settings
-                    </button>
+                    </Link>
                     <hr className="my-2 border-gray-100" />
                     <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
                       <LogOut className="w-4 h-4" />
@@ -330,14 +342,6 @@ export default function Navbar({ user }: NavbarProps) {
             </Link>
 
             <Link
-              href="/summary"
-              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
-            >
-              <BarChart3 className="w-5 h-5" />
-              Summary
-            </Link>
-
-            <Link
               href="/calendar"
               className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
             >
@@ -345,26 +349,42 @@ export default function Navbar({ user }: NavbarProps) {
               Calendar
             </Link>
 
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+            <Link
+              href="/notifications"
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
+            >
               <Bell className="w-5 h-5" />
               Notifications
-              <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">3</span>
-            </button>
+              {unreadCount > 0 && (
+                <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-semibold min-w-[20px] text-center">
+                  {unreadCount}
+                </span>
+              )}
+            </Link>
 
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+            <Link
+              href="/profile"
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
+            >
               <User className="w-5 h-5" />
               Profile Settings
-            </button>
+            </Link>
 
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+            <Link
+              href="/tasks"
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
+            >
               <ClipboardList className="w-5 h-5" />
               My Tasks
-            </button>
+            </Link>
 
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+            <Link
+              href="/settings"
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
+            >
               <Settings className="w-5 h-5" />
               Settings
-            </button>
+            </Link>
 
             <hr className="border-gray-200" />
 

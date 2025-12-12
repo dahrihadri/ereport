@@ -2,9 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import Navbar from '@/components/Navbar';
-import CalendarWidget from '@/components/CalendarWidget';
-import TaskModal from '@/components/TaskModal';
+import Navbar from '@/components/main/Navbar';
+import CalendarWidget from '@/components/calendar/CalendarWidget';
+import TaskModal from '@/components/ui/TaskModal';
 import { Task } from '@/types';
 import { getUserById } from '@/lib/mock-data';
 
@@ -300,10 +300,95 @@ export default function CalendarPage() {
                 selectedTask={highlightedTaskId ? filteredTasks.find(t => t.id === highlightedTaskId) || null : null}
               />
             </div>
+
+            {/* Mobile Task List - Only visible on mobile/tablet */}
+            <div className="xl:hidden bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 flex flex-col max-h-96">
+              <div className="flex items-center justify-between mb-3 sm:mb-4 flex-shrink-0">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-800">Filtered Tasks</h3>
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-semibold">
+                  {filteredTasks.length}
+                </span>
+              </div>
+              <div className="space-y-2 overflow-y-auto pr-1 scroll-smooth flex-1 min-h-0 -mr-1">
+                {filteredTasks.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 sm:py-12 text-gray-400">
+                    <svg className="w-12 h-12 sm:w-16 sm:h-16 mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p className="text-xs sm:text-sm font-medium">No tasks found</p>
+                    <p className="text-xs mt-1">Try adjusting filters</p>
+                  </div>
+                ) : (
+                  filteredTasks.map(task => {
+                    const isHighlighted = highlightedTaskId === task.id;
+                    return (
+                      <button
+                        key={task.id}
+                        ref={(el) => {
+                          taskRefs.current[task.id] = el;
+                        }}
+                        onClick={() => handleSidebarTaskClick(task)}
+                        onDoubleClick={() => handleTaskClick(task)}
+                        className={`w-full text-left p-2.5 sm:p-3 rounded-lg transition-all border-2 touch-manipulation active:scale-[0.99] ${
+                          isHighlighted
+                            ? 'bg-blue-50 border-blue-500 shadow-md'
+                            : 'bg-gray-50 border-transparent hover:bg-gray-100 hover:border-blue-200 active:bg-blue-50'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2">
+                          <h4 className={`text-xs sm:text-sm font-medium line-clamp-2 flex-1 ${
+                            isHighlighted ? 'text-blue-700' : 'text-gray-800'
+                          }`}>
+                            {task.title}
+                          </h4>
+                          <span
+                            className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-semibold whitespace-nowrap flex-shrink-0 ${
+                              task.priority === 'critical'
+                                ? 'bg-red-100 text-red-700'
+                                : task.priority === 'high'
+                                ? 'bg-orange-100 text-orange-700'
+                                : task.priority === 'medium'
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-gray-100 text-gray-700'
+                            }`}
+                          >
+                            {task.priority}
+                          </span>
+                        </div>
+                        <p className={`text-[10px] sm:text-xs mb-1.5 sm:mb-2 truncate ${isHighlighted ? 'text-blue-600' : 'text-gray-600'}`}>
+                          {task.assignedTo}
+                        </p>
+                        <div className={`flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs ${isHighlighted ? 'text-blue-600' : 'text-gray-500'}`}>
+                          <span>
+                            {new Date(task.startDate).toLocaleDateString('en-MY', {
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </span>
+                          <span>→</span>
+                          <span>
+                            {new Date(task.endDate).toLocaleDateString('en-MY', {
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </span>
+                        </div>
+                        {isHighlighted && (
+                          <div className="mt-1.5 sm:mt-2 text-[10px] sm:text-xs text-blue-600 font-medium">
+                            <span className="hidden sm:inline">Click to view in calendar • Double-click for details</span>
+                            <span className="sm:hidden">Tap to view • Double-tap details</span>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </div>
           </motion.div>
 
-          {/* RIGHT SIDE - Task List Sidebar */}
-          <div className="xl:col-span-1 bg-gradient-to-br from-gray-200 to-gray-200 px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 flex flex-col gap-4 sm:gap-5 md:gap-6">
+          {/* RIGHT SIDE - Task List Sidebar - Hidden on mobile */}
+          <div className="hidden xl:flex xl:col-span-1 bg-gradient-to-br from-gray-200 to-gray-200 px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 flex-col gap-4 sm:gap-5 md:gap-6">
             <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4 flex flex-col flex-1 min-h-0">
               <div className="flex items-center justify-between mb-3 sm:mb-4 flex-shrink-0">
                 <h3 className="text-base sm:text-lg font-semibold text-gray-800">Filtered Tasks</h3>

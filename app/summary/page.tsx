@@ -1,14 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import Navbar from '@/components/Navbar';
-import StatCard from '@/components/StatCard';
-import RightSidebar from '@/components/RightSidebar';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import StatCard from '@/components/ui/StatCard';
 import { mockReportsWithRelations, getUserById, mockUsers } from '@/lib/mock-data';
 import { ReportWithRelations, Task } from '@/types';
-import { CheckCircle2, RefreshCw, FileText, Clock, TrendingUp, Users, Activity } from 'lucide-react';
-import TaskModal from '@/components/TaskModal';
+import { CheckCircle2, RefreshCw, FileText, Clock } from 'lucide-react';
+import TaskModal from '@/components/ui/TaskModal';
 
 export default function SummaryPage() {
   const [reports] = useState<ReportWithRelations[]>(mockReportsWithRelations);
@@ -92,26 +90,15 @@ export default function SummaryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <Navbar
-        user={{
-          name: currentUser?.name || 'Ahmad Faizal',
-          email: currentUser?.email || 'ahmad.faizal@mcmc.gov.my',
-          role: 'DMDD',
-        }}
-      />
-
-      <div className="w-full">
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-0 min-h-[calc(100vh-64px)]">
-
-          {/* LEFT SIDE - Summary Content */}
-          <motion.div
-            className="xl:col-span-2 px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 space-y-4 sm:space-y-5 md:space-y-6 relative overflow-y-auto"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-          >
-            {/* Top Statistics Cards */}
+    <DashboardLayout
+      user={{
+        name: currentUser?.name || 'Ahmad Faizal',
+        email: currentUser?.email || 'ahmad.faizal@mcmc.gov.my',
+        role: 'DMDD',
+      }}
+      onTaskClick={handleTaskClick}
+    >
+      {/* Top Statistics Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <StatCard
                 title="Completed"
@@ -359,13 +346,6 @@ export default function SummaryPage() {
               </div>
             </div>
 
-          </motion.div>
-
-          {/* RIGHT SIDE - Sidebar */}
-          <RightSidebar onCreateReport={handleCreateReport} onTaskClick={handleTaskClick} />
-        </div>
-      </div>
-
       {/* Task Modal */}
       <TaskModal
         isOpen={isModalOpen}
@@ -374,6 +354,6 @@ export default function SummaryPage() {
         task={selectedTask}
         mode={modalMode}
       />
-    </div>
+    </DashboardLayout>
   );
 }

@@ -14,8 +14,11 @@ interface TaskModalProps {
 }
 
 export default function TaskModal({ isOpen, onClose, onSave, task, mode }: TaskModalProps) {
-  const [formData, setFormData] = useState<Partial<Task>>(
-    task || {
+  const getInitialFormData = (): Partial<Task> => {
+    if (task) {
+      return task;
+    }
+    return {
       title: '',
       description: '',
       status: 'pending',
@@ -27,29 +30,18 @@ export default function TaskModal({ isOpen, onClose, onSave, task, mode }: TaskM
       endDate: new Date(),
       completionLevel: 'not_started',
       tags: [],
-    }
-  );
+    };
+  };
+
+  const [formData, setFormData] = useState<Partial<Task>>(getInitialFormData);
 
   // Update form data when task prop changes
   useEffect(() => {
-    if (task) {
-      setFormData(task);
-    } else {
-      setFormData({
-        title: '',
-        description: '',
-        status: 'pending',
-        priority: 'medium',
-        assignedTo: '',
-        assignedToEmail: '',
-        department: '',
-        startDate: new Date(),
-        endDate: new Date(),
-        completionLevel: 'not_started',
-        tags: [],
-      });
+    if (isOpen) {
+      setFormData(getInitialFormData());
     }
-  }, [task, isOpen]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

@@ -1,13 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import Navbar from '@/components/Navbar';
-import RightSidebar from '@/components/RightSidebar';
-import TaskModal from '@/components/TaskModal';
-import NotificationCard from '@/components/NotificationCard';
-import FilterButton from '@/components/FilterButton';
-import Pagination from '@/components/Pagination';
+import { useRouter } from 'next/navigation';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import TaskModal from '@/components/ui/TaskModal';
+import NotificationsTable from '@/components/notifications/NotificationsTable';
+import FilterButton from '@/components/ui/FilterButton';
+import Pagination from '@/components/ui/Pagination';
 import { Task } from '@/types';
 import { Bell } from 'lucide-react';
 import { getUserById } from '@/lib/mock-data';
@@ -161,6 +160,7 @@ const mockNotifications: Notification[] = [
 ];
 
 export default function NotificationsPage() {
+  const router = useRouter();
   const currentUser = getUserById('user-1');
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const [filterType, setFilterType] = useState<NotificationType>('all');
@@ -217,6 +217,15 @@ export default function NotificationsPage() {
     setNotifications(notifications.map(n => ({ ...n, read: true })));
   };
 
+  const handleNotificationClick = (id: string) => {
+    const notification = notifications.find(n => n.id === id);
+    if (notification && notification.details?.reportTitle) {
+      // Navigate to report details page
+      // Using notification ID as report ID for now (in production, use actual reportId from notification.details)
+      router.push(`/reports/${id}`);
+    }
+  };
+
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
     setModalMode('view');
@@ -235,34 +244,15 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <Navbar
-        user={{
-          name: currentUser?.name || 'Ahmad Faizal',
-          email: currentUser?.email || 'ahmad.faizal@mcmc.gov.my',
-          role: 'DMDD',
-        }}
-      />
-
-      <div className="w-full">
-        {/* Main Grid Layout */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-0 min-h-[calc(100vh-64px)]">
-
-          {/* LEFT SIDE - Notifications List */}
-          <motion.div
-            className="xl:col-span-2 px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 flex flex-col gap-4 sm:gap-5 md:gap-6 relative overflow-hidden"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-          >
-            {/* Curved edge decoration */}
-            <div className="hidden xl:block absolute top-0 right-0 h-full w-1 pointer-events-none">
-              <svg className="h-full w-full" viewBox="0 0 10 100" preserveAspectRatio="none">
-                <path d="M10,0 Q5,50 10,100" stroke="white" strokeWidth="2" fill="none" />
-              </svg>
-            </div>
-
-            {/* Header */}
+    <DashboardLayout
+      user={{
+        name: currentUser?.name || 'Ahmad Faizal',
+        email: currentUser?.email || 'ahmad.faizal@mcmc.gov.my',
+        role: 'DMDD',
+      }}
+      onTaskClick={handleTaskClick}
+    >
+      {/* Header */}
             <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-xl flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div>
@@ -346,47 +336,35 @@ export default function NotificationsPage() {
               </div>
             </div>
 
-            {/* Notifications List */}
-            <div className="flex-1 flex flex-col min-h-0">
-              <div className="flex-1 overflow-y-auto pr-2">
-                <div className={`space-y-3 pb-4 transition-opacity duration-150 ${isAnimating ? 'opacity-0' : 'opacity-100'}`}>
-                  {paginatedNotifications.length === 0 ? (
-                    <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
-                      <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Bell className="w-10 h-10 text-gray-400" />
-                      </div>
-                      <p className="text-lg font-semibold text-gray-700 mb-1">No notifications found</p>
-                      <p className="text-sm text-gray-500">Try adjusting your filters</p>
-                    </div>
-                  ) : (
-                    paginatedNotifications.map((notification) => (
-                      <NotificationCard
-                        key={notification.id}
-                        {...notification}
-                        onClick={markAsRead}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Pagination */}
-              {filteredNotifications.length > itemsPerPage && (
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  totalItems={filteredNotifications.length}
-                  itemsPerPage={itemsPerPage}
-                  onPageChange={handlePageChange}
-                />
-              )}
+      {/* Notifications Table */}
+      <div className={`transition-opacity duration-150 ${isAnimating ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        {paginatedNotifications.length === 0 ? (
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Bell className="w-10 h-10 text-gray-400" />
             </div>
-          </motion.div>
-
-          {/* RIGHT SIDE - Recent Reports & Create New */}
-          <RightSidebar onCreateReport={handleCreateReport} onTaskClick={handleTaskClick} />
-        </div>
+            <p className="text-lg font-semibold text-gray-700 mb-1">No notifications found</p>
+            <p className="text-sm text-gray-500">Try adjusting your filters</p>
+          </div>
+        ) : (
+          <NotificationsTable
+            notifications={paginatedNotifications}
+            onMarkAsRead={markAsRead}
+            onNotificationClick={handleNotificationClick}
+          />
+        )}
       </div>
+
+      {/* Pagination */}
+      {filteredNotifications.length > itemsPerPage && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredNotifications.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={handlePageChange}
+        />
+      )}
 
       {/* Task Modal */}
       <TaskModal
@@ -396,6 +374,6 @@ export default function NotificationsPage() {
         task={selectedTask}
         mode={modalMode}
       />
-    </div>
+    </DashboardLayout>
   );
 }
