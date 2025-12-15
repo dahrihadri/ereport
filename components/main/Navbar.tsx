@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Bell, ChevronDown, User, Settings, ClipboardList, LogOut, Menu, X, Calendar, LayoutDashboard, BarChart3 } from 'lucide-react';
+import { Bell, ChevronDown, User, Settings, ClipboardList, LogOut, Menu, X, Calendar, LayoutDashboard, BarChart3, Shield } from 'lucide-react';
 
 interface NavbarProps {
   user?: {
@@ -289,6 +289,16 @@ export default function Navbar({ user }: NavbarProps) {
                       <ClipboardList className="w-4 h-4" />
                       My Tasks
                     </Link>
+                    {user?.role === 'SYSTEM_ADMIN' && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setShowUserMenu(false)}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <Shield className="w-4 h-4" />
+                        Admin Panel
+                      </Link>
+                    )}
                     <Link
                       href="/settings"
                       onClick={() => setShowUserMenu(false)}

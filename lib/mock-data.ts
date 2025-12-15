@@ -85,6 +85,18 @@ export const mockUsers: User[] = [
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
   },
+  {
+    id: 'user-admin',
+    azureAdObjectId: 'azure-admin',
+    name: 'Aliff Najmi',
+    email: 'admin@mcmc.gov.my',
+    role: 'SYSTEM_ADMIN',
+    sectorIds: [],
+    divisionIds: [],
+    isActive: true,
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+  },
 ];
 
 // ============================================================================
@@ -358,34 +370,6 @@ export const mockReportsWithRelations: ReportWithRelations[] = mockReports.map((
 // HELPER FUNCTIONS
 // ============================================================================
 
-export function getReportsByStatus(status: string) {
-  return mockReportsWithRelations.filter((r) => r.currentStatus === status);
-}
-
-export function getReportsBySector(sectorId: string) {
-  return mockReportsWithRelations.filter((r) => r.sectorId === sectorId);
-}
-
-export function getReportsByDivision(divisionId: string) {
-  return mockReportsWithRelations.filter((r) => r.divisionId === divisionId);
-}
-
-export function getReportsByUser(userId: string) {
-  return mockReportsWithRelations.filter((r) => r.createdByUserId === userId);
-}
-
 export function getUserById(id: string) {
   return mockUsers.find((u) => u.id === id);
-}
-
-export function getSectorById(id: string) {
-  return mockSectors.find((s) => s.id === id);
-}
-
-export function getDivisionById(id: string) {
-  return mockDivisions.find((d) => d.id === id);
-}
-
-export function getProjectById(id: string) {
-  return mockProjects.find((p) => p.id === id);
 }

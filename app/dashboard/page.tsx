@@ -8,7 +8,8 @@ import AwaitingActionWidget from '@/components/dashboard/AwaitingActionWidget';
 import OverdueReportsWidget from '@/components/dashboard/OverdueReportsWidget';
 import MyDivisionReports from '@/components/dashboard/MyDivisionReports';
 import { ReportWithRelations, Task } from '@/types';
-import { mockReportsWithRelations, getUserById } from '@/lib/mock-data';
+import { mockReportsWithRelations } from '@/lib/mock-data';
+import { useCurrentUser } from '@/lib/use-current-user';
 import { ListTodo, Timer, CheckCircle2, NotebookIcon } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -17,8 +18,8 @@ export default function DashboardPage() {
   const [selectedTask, setSelectedTask] = useState<Task | undefined>(undefined);
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
 
-  // Simulating current user
-  const currentUser = getUserById('user-1');
+  // Get current logged-in user from localStorage
+  const currentUser = useCurrentUser();
 
   const stats = {
     total: reports.length,
@@ -42,12 +43,17 @@ export default function DashboardPage() {
     setIsModalOpen(false);
   };
 
+  // Show loading or fallback while user is being loaded
+  if (!currentUser) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
   return (
     <DashboardLayout
       user={{
-        name: currentUser?.name || 'Ahmad Faizal',
-        email: currentUser?.email || 'ahmad.faizal@mcmc.gov.my',
-        role: 'DMDD',
+        name: currentUser.name,
+        email: currentUser.email,
+        role: currentUser.role,
       }}
       onTaskClick={handleTaskClick}
     >
@@ -68,7 +74,7 @@ export default function DashboardPage() {
         <div className="relative z-10">
           <div className="mb-0">
             <p className="text-xs sm:text-sm opacity-90">
-              Peace Be Upon You! {currentUser?.name.toUpperCase()}
+              Peace Be Upon You! {currentUser.name.toUpperCase()}
             </p>
             <h2 className="text-2xl sm:text-3xl font-bold mt-1 sm:mt-2">
               Welcome to Your Dashboard
@@ -116,22 +122,22 @@ export default function DashboardPage() {
       {/* Awaiting Action Widget */}
       <AwaitingActionWidget
         reports={reports}
-        userRole={currentUser?.role || 'HEAD_OF_DIVISION'}
-        userId={currentUser?.id || 'user-1'}
+        userRole={currentUser.role}
+        userId={currentUser.id}
       />
 
       {/* Overdue Reports Widget */}
       <OverdueReportsWidget
         reports={reports}
-        userRole={currentUser?.role || 'HEAD_OF_DIVISION'}
-        userId={currentUser?.id || 'user-1'}
+        userRole={currentUser.role}
+        userId={currentUser.id}
       />
 
       {/* My Division Reports - Only for HoD and Secretary */}
-      {(currentUser?.role === 'HEAD_OF_DIVISION' || currentUser?.role === 'DIVISION_SECRETARY') && (
+      {(currentUser.role === 'HEAD_OF_DIVISION' || currentUser.role === 'DIVISION_SECRETARY') && currentUser.divisionIds[0] && (
         <MyDivisionReports
           reports={reports}
-          divisionId={currentUser?.divisionIds?.[0] || 'div-1'}
+          divisionId={currentUser.divisionIds[0]}
           divisionName="IT Development Division"
         />
       )}
