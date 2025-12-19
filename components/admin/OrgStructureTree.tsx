@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import { Sector, Division } from '@/types';
 import { getAllSectors, getAllDivisions, getAllUsers, getDivisionsBySectorId } from '@/lib/admin-mock-data';
-import { ChevronDown, ChevronRight, Building2, FolderTree, Edit2, Trash2, User } from 'lucide-react';
+import { ChevronDown, ChevronRight, Building2, FolderTree, Edit2, User } from 'lucide-react';
+import DeleteButton from '@/components/admin/DeleteButton';
 
 interface OrgStructureTreeProps {
   onEditDivision: (division: Division) => void;
-  onDeleteDivision: (divisionId: string) => void;
+  onDeleteDivision: (divisionId: string) => Promise<boolean>;
 }
 
 export default function OrgStructureTree({ onEditDivision, onDeleteDivision }: OrgStructureTreeProps) {
@@ -142,18 +143,16 @@ export default function OrgStructureTree({ onEditDivision, onDeleteDivision }: O
                                   >
                                     <Edit2 className="w-4 h-4" />
                                   </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (confirm(`Delete ${division.name}?`)) {
-                                        onDeleteDivision(division.id);
-                                      }
-                                    }}
-                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                                    title="Delete division"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
+                                  <div onClick={(e) => e.stopPropagation()}>
+                                    <DeleteButton
+                                      itemId={division.id}
+                                      itemName={division.name}
+                                      itemType="division"
+                                      onDelete={onDeleteDivision}
+                                      variant="icon"
+                                      size="md"
+                                    />
+                                  </div>
                                 </div>
                               </div>
                             );

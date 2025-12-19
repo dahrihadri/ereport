@@ -13,6 +13,7 @@ import {
 import { Plus } from 'lucide-react';
 import DivisionForm from '@/components/admin/DivisionForm';
 import OrgStructureTree from '@/components/admin/OrgStructureTree';
+import DeleteButton from '@/components/admin/DeleteButton';
 
 export default function DivisionsPage() {
   const [divisions, setDivisions] = useState<Division[]>(getAllDivisions());
@@ -44,12 +45,13 @@ export default function DivisionsPage() {
     setIsFormOpen(false);
   };
 
-  const handleDeleteDivision = (divisionId: string) => {
+  const handleDeleteDivision = async (divisionId: string): Promise<boolean> => {
     try {
       deleteDivision(divisionId);
       loadDivisions();
+      return true;
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to delete division');
+      throw new Error(error instanceof Error ? error.message : 'Failed to delete division');
     }
   };
 
@@ -177,23 +179,22 @@ export default function DivisionsPage() {
                     <td className="hidden lg:table-cell px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-600">
                       {hod?.name || 'Not assigned'}
                     </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-right text-xs sm:text-sm font-medium space-x-1 sm:space-x-2">
-                      <button
-                        onClick={() => handleEditDivision(division)}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (confirm(`Delete ${division.name}?`)) {
-                            handleDeleteDivision(division.id);
-                          }
-                        }}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
+                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-right text-xs sm:text-sm font-medium">
+                      <div className="flex items-center justify-end space-x-1 sm:space-x-2">
+                        <button
+                          onClick={() => handleEditDivision(division)}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          Edit
+                        </button>
+                        <DeleteButton
+                          itemId={division.id}
+                          itemName={division.name}
+                          itemType="division"
+                          onDelete={handleDeleteDivision}
+                          variant="text"
+                        />
+                      </div>
                     </td>
                   </tr>
                 );

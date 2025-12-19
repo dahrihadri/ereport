@@ -10,8 +10,9 @@ import {
   getAllUsers,
   getDivisionsBySectorId,
 } from '@/lib/admin-mock-data';
-import { Plus, Edit2, Trash2, Building2 } from 'lucide-react';
+import { Plus, Edit2, Building2 } from 'lucide-react';
 import SectorForm from '@/components/admin/SectorForm';
+import DeleteButton from '@/components/admin/DeleteButton';
 
 export default function SectorsPage() {
   const [sectors, setSectors] = useState<Sector[]>(getAllSectors());
@@ -42,12 +43,13 @@ export default function SectorsPage() {
     setIsFormOpen(false);
   };
 
-  const handleDeleteSector = (sectorId: string) => {
+  const handleDeleteSector = async (sectorId: string): Promise<boolean> => {
     try {
       deleteSector(sectorId);
       loadSectors();
+      return true;
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to delete sector');
+      throw new Error(error instanceof Error ? error.message : 'Failed to delete sector');
     }
   };
 
@@ -156,21 +158,14 @@ export default function SectorsPage() {
                   <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span>Edit</span>
                 </button>
-                <button
-                  onClick={() => {
-                    if (
-                      confirm(
-                        `Are you sure you want to delete ${sector.name}? This will fail if there are divisions under this sector.`
-                      )
-                    ) {
-                      handleDeleteSector(sector.id);
-                    }
-                  }}
-                  className="flex items-center space-x-1 px-2 sm:px-3 py-1.5 text-xs sm:text-sm text-red-600 hover:bg-red-50 rounded-lg"
-                >
-                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span>Delete</span>
-                </button>
+                <DeleteButton
+                  itemId={sector.id}
+                  itemName={sector.name}
+                  itemType="sector"
+                  onDelete={handleDeleteSector}
+                  variant="text"
+                  confirmMessage={`Are you sure you want to delete ${sector.name}? This will fail if there are divisions under this sector.`}
+                />
               </div>
             </div>
           </div>

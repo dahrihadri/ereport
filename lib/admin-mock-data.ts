@@ -196,5 +196,115 @@ export const deleteProject = (id: string): boolean => {
 };
 
 // ============================================================================
+// BULK OPERATIONS
+// ============================================================================
+
+export const bulkDeleteUsers = (ids: string[]): { success: number; failed: number } => {
+  let success = 0;
+  let failed = 0;
+
+  ids.forEach(id => {
+    try {
+      if (deleteUser(id)) {
+        success++;
+      } else {
+        failed++;
+      }
+    } catch {
+      failed++;
+    }
+  });
+
+  return { success, failed };
+};
+
+export const bulkActivateUsers = (ids: string[]): { success: number; failed: number } => {
+  let success = 0;
+  let failed = 0;
+
+  ids.forEach(id => {
+    if (activateUser(id)) {
+      success++;
+    } else {
+      failed++;
+    }
+  });
+
+  return { success, failed };
+};
+
+export const bulkDeactivateUsers = (ids: string[]): { success: number; failed: number } => {
+  let success = 0;
+  let failed = 0;
+
+  ids.forEach(id => {
+    if (deactivateUser(id)) {
+      success++;
+    } else {
+      failed++;
+    }
+  });
+
+  return { success, failed };
+};
+
+export const bulkDeleteSectors = (ids: string[]): { success: number; failed: number } => {
+  let success = 0;
+  let failed = 0;
+
+  ids.forEach(id => {
+    try {
+      if (deleteSector(id)) {
+        success++;
+      } else {
+        failed++;
+      }
+    } catch {
+      failed++;
+    }
+  });
+
+  return { success, failed };
+};
+
+export const bulkDeleteDivisions = (ids: string[]): { success: number; failed: number } => {
+  let success = 0;
+  let failed = 0;
+
+  ids.forEach(id => {
+    try {
+      if (deleteDivision(id)) {
+        success++;
+      } else {
+        failed++;
+      }
+    } catch {
+      failed++;
+    }
+  });
+
+  return { success, failed };
+};
+
+export const bulkDeleteProjects = (ids: string[]): { success: number; failed: number } => {
+  let success = 0;
+  let failed = 0;
+
+  ids.forEach(id => {
+    try {
+      if (deleteProject(id)) {
+        success++;
+      } else {
+        failed++;
+      }
+    } catch {
+      failed++;
+    }
+  });
+
+  return { success, failed };
+};
+
+// ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================

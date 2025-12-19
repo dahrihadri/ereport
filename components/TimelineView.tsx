@@ -57,57 +57,18 @@ export default function TimelineView({ tasks, onTaskClick }: TimelineViewProps) 
 
             <div
               onClick={() => onTaskClick(task)}
-              className="flex-1 bg-white rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer p-3 sm:p-5 border-2 border-gray-100 hover:border-blue-300 group"
+              className="flex-1 bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer p-3 border border-gray-200 hover:border-blue-400 group"
             >
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 sm:gap-4 mb-3">
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-1 sm:mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
-                    {task.title}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-gray-600 mb-2 line-clamp-2">
-                    {task.description}
-                  </p>
-                </div>
-                <div className="flex gap-2 flex-wrap sm:flex-nowrap">
-                  <StatusBadge status={task.status} />
-                  <PriorityBadge priority={task.priority} />
-                </div>
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <h3 className="text-sm font-semibold text-gray-800 group-hover:text-blue-600 transition-colors line-clamp-2 flex-1">
+                  {task.title}
+                </h3>
+                <PriorityBadge priority={task.priority} />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600 mb-3">
-                <div className="flex items-center gap-2">
-                  <User className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
-                  <span className="truncate">
-                    <span className="font-medium hidden sm:inline">Assigned to: </span>
-                    {task.assignedTo}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
-                  <span className="truncate">
-                    <span className="hidden sm:inline">{formatDate(task.startDate)}</span>
-                    <span className="sm:hidden">{formatDateShort(task.startDate)}</span>
-                    <span className="mx-1">-</span>
-                    <span className="hidden sm:inline">{formatDate(task.endDate)}</span>
-                    <span className="sm:hidden">{formatDateShort(task.endDate)}</span>
-                  </span>
-                </div>
-              </div>
-
-              {task.department && (
-                <div className="flex items-center gap-2 mb-3">
-                  <Building2 className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500" />
-                  <span className="bg-gradient-to-r from-blue-50 to-blue-100 px-2 sm:px-3 py-1 rounded-lg text-xs font-medium text-blue-700 border border-blue-200">
-                    {task.department}
-                  </span>
-                </div>
-              )}
-
-              <div className="mt-3 sm:mt-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-gray-600">Completion:</span>
-                  <CompletionLevelBadge level={task.completionLevel} showIcon={true} />
-                </div>
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <Calendar className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                <span className="truncate">{formatDateShort(task.startDate)}</span>
               </div>
             </div>
           </div>

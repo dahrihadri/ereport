@@ -95,9 +95,9 @@ export default function ReportsTable({
   };
 
   return (
-    <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 overflow-visible">
       {/* Desktop Table View */}
-      <div className="hidden md:block overflow-x-auto">
+      <div className="hidden md:block overflow-x-auto overflow-y-visible">
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>

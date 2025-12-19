@@ -1,8 +1,9 @@
 'use client';
 
 import { User, UserRole } from '@/types';
-import { Edit2, Trash2, Power, PowerOff } from 'lucide-react';
+import { Edit2, Power, PowerOff } from 'lucide-react';
 import { useState } from 'react';
+import DeleteButton from '@/components/admin/DeleteButton';
 
 interface UserTableProps {
   users: User[];
@@ -147,17 +148,17 @@ export default function UserTable({ users, onEdit, onDelete, onToggleActive }: U
                     >
                       {user.isActive ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
                     </button>
-                    <button
-                      onClick={() => {
-                        if (confirm(`Are you sure you want to delete ${user.name}?`)) {
-                          onDelete(user.id);
-                        }
+                    <DeleteButton
+                      itemId={user.id}
+                      itemName={user.name}
+                      itemType="user"
+                      onDelete={async (id) => {
+                        onDelete(id);
+                        return true;
                       }}
-                      className="text-red-600 hover:text-red-900"
-                      title="Delete user"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                      variant="icon"
+                      size="md"
+                    />
                   </div>
                 </td>
               </tr>

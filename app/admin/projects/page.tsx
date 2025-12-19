@@ -10,8 +10,9 @@ import {
   getAllSectors,
   getAllDivisions,
 } from '@/lib/admin-mock-data';
-import { Plus, Edit2, Trash2, Briefcase, Search, Filter } from 'lucide-react';
+import { Plus, Edit2, Briefcase, Search, Filter } from 'lucide-react';
 import ProjectForm from '@/components/admin/ProjectForm';
+import DeleteButton from '@/components/admin/DeleteButton';
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>(getAllProjects());
@@ -71,9 +72,14 @@ export default function ProjectsPage() {
     setIsFormOpen(false);
   };
 
-  const handleDeleteProject = (projectId: string) => {
-    deleteProject(projectId);
-    loadProjects();
+  const handleDeleteProject = async (projectId: string): Promise<boolean> => {
+    try {
+      deleteProject(projectId);
+      loadProjects();
+      return true;
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : 'Failed to delete project');
+    }
   };
 
   const getSectorName = (sectorId: string) => {
@@ -262,17 +268,14 @@ export default function ProjectsPage() {
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
-                      <button
-                        onClick={() => {
-                          if (confirm(`Delete ${project.name}?`)) {
-                            handleDeleteProject(project.id);
-                          }
-                        }}
-                        className="text-red-600 hover:text-red-900"
-                        title="Delete project"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <DeleteButton
+                        itemId={project.id}
+                        itemName={project.name}
+                        itemType="project"
+                        onDelete={handleDeleteProject}
+                        variant="icon"
+                        size="md"
+                      />
                     </div>
                   </td>
                 </tr>

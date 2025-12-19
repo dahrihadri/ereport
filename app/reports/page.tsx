@@ -1,14 +1,17 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useMemo } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import TaskModal from '@/components/ui/TaskModal';
 import FilterButton from '@/components/ui/FilterButton';
 import Pagination from '@/components/ui/Pagination';
 import ReportsTable from '../../components/reports/ReportsTable';
 import BulkActionsBar from '@/components/ui/BulkActionsBar';
+import UserSwitcher from '@/components/ui/UserSwitcher';
 import { ReportWithRelations, Task, ReportStatus } from '@/types';
-import { mockReportsWithRelations, getUserById } from '@/lib/mock-data';
+import { mockReportsWithRelations } from '@/lib/mock-data';
+import { useCurrentUser } from '@/lib/use-current-user';
+import { filterReportsByUserRole } from '@/lib/permissions';
 import { Search, Filter, FileText } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
@@ -19,7 +22,15 @@ function ReportsContent() {
   const router = useRouter();
   const statusParam = searchParams.get('status') as ReportStatus | null;
 
-  const [reports] = useState<ReportWithRelations[]>(mockReportsWithRelations);
+  // Get current user
+  const currentUser = useCurrentUser();
+
+  // Filter reports by user role - use useMemo directly, no useState
+  const reports = useMemo(
+    () => currentUser ? filterReportsByUserRole(mockReportsWithRelations, currentUser) : [],
+    [currentUser]
+  );
+
   const [filterStatus, setFilterStatus] = useState<FilterType>(() => statusParam || 'all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,8 +39,6 @@ function ReportsContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedReports, setSelectedReports] = useState<string[]>([]);
   const itemsPerPage = 10;
-
-  const currentUser = getUserById('user-1');
 
   // Filter reports
   const filteredReports = reports.filter(report => {
@@ -72,6 +81,18 @@ function ReportsContent() {
     // Navigate to report detail page
     router.push(`/reports/${report.id}`);
   };
+
+  // Show loading while user is being loaded
+  if (!currentUser) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Bulk selection handlers
   const handleSelectReport = (reportId: string, selected: boolean) => {
@@ -149,10 +170,11 @@ function ReportsContent() {
   return (
     <DashboardLayout
       user={{
-        name: currentUser?.name || 'Ahmad Faizal',
-        email: currentUser?.email || 'ahmad.faizal@mcmc.gov.my',
-        role: 'DMDD',
+        name: currentUser.name,
+        email: currentUser.email,
+        role: currentUser.role,
       }}
+      currentUser={currentUser}
       onTaskClick={handleTaskClick}
     >
       {/* Header */}
@@ -291,6 +313,9 @@ function ReportsContent() {
         onBulkDownload={handleBulkDownload}
         onBulkSubmit={handleBulkSubmit}
       />
+
+      {/* User Switcher - Development Only */}
+      <UserSwitcher />
     </DashboardLayout>
   );
 }

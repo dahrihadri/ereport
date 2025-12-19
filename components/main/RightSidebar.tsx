@@ -1,20 +1,44 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import TimelineView from '@/components/TimelineView';
-import { ReportStatus, ReportWithRelations, Task } from '@/types';
-import { mockReportsWithRelations } from '@/lib/mock-data';
-import { Plus } from 'lucide-react';
+import { ReportStatus, ReportWithRelations, Task, User } from '@/types';
+import { mockReportsWithRelations, mockUsers } from '@/lib/mock-data';
+import { Plus, FileText, Timer, CheckCircle2, FileEdit } from 'lucide-react';
+import SimpleStatCard from '@/components/ui/SimpleStatCard';
+import { filterReportsByUserRole } from '@/lib/permissions';
 
 interface RightSidebarProps {
   onTaskClick?: (task: Task) => void;
+  currentUser?: User;
 }
 
-export default function RightSidebar({ onTaskClick }: RightSidebarProps) {
+export default function RightSidebar({ onTaskClick, currentUser }: RightSidebarProps) {
   const router = useRouter();
-  const [reports] = useState<ReportWithRelations[]>(mockReportsWithRelations);
+
+  // Use default user if not provided (for demo purposes)
+  const user = currentUser || mockUsers[0]; // Default to Ahmad Faizal (HoD)
+
+  // Filter reports based on user's role
+  const userReports = useMemo(
+    () => filterReportsByUserRole(mockReportsWithRelations, user),
+    [user]
+  );
+
+  const [reports] = useState<ReportWithRelations[]>(userReports);
   const [filterStatus, setFilterStatus] = useState<ReportStatus | 'all'>('all');
+
+  // Calculate statistics
+  const stats = {
+    total: reports.length,
+    draft: reports.filter(r => r.currentStatus === 'draft').length,
+    underReview: reports.filter(r =>
+      r.currentStatus === 'under_review_sector' ||
+      r.currentStatus === 'under_review_dmd'
+    ).length,
+    approved: reports.filter(r => r.currentStatus === 'final_approved').length,
+  };
 
   const filteredReports = filterStatus === 'all'
     ? reports
@@ -52,6 +76,42 @@ export default function RightSidebar({ onTaskClick }: RightSidebarProps) {
 
   return (
     <div className="bg-gradient-to-br from-gray-200 to-gray-200 px-4 sm:px-5 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 flex flex-col gap-4 sm:gap-5 md:gap-6 h-full">
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-4 gap-3">
+        <SimpleStatCard
+          title="Total"
+          value={stats.total}
+          icon={FileText}
+          color="blue"
+          subtitle="Reports"
+          href="/reports"
+        />
+        <SimpleStatCard
+          title="Review"
+          value={stats.underReview}
+          icon={Timer}
+          color="blue"
+          subtitle="Pending"
+          href="/reports?status=under_review"
+        />
+        <SimpleStatCard
+          title="Approved"
+          value={stats.approved}
+          icon={CheckCircle2}
+          color="blue"
+          subtitle="Done"
+          href="/reports?status=approved"
+        />
+        <SimpleStatCard
+          title="Draft"
+          value={stats.draft}
+          icon={FileEdit}
+          color="blue"
+          subtitle="Drafts"
+          href="/reports?status=draft"
+        />
+      </div>
 
       {/* Create New Report Card */}
       <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-xl">

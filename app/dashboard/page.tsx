@@ -2,15 +2,14 @@
 
 import { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import StatCard from '@/components/ui/StatCard';
 import TaskModal from '@/components/ui/TaskModal';
 import AwaitingActionWidget from '@/components/dashboard/AwaitingActionWidget';
 import OverdueReportsWidget from '@/components/dashboard/OverdueReportsWidget';
 import MyDivisionReports from '@/components/dashboard/MyDivisionReports';
+import UserSwitcher from '@/components/ui/UserSwitcher';
 import { ReportWithRelations, Task } from '@/types';
 import { mockReportsWithRelations } from '@/lib/mock-data';
 import { useCurrentUser } from '@/lib/use-current-user';
-import { ListTodo, Timer, CheckCircle2, NotebookIcon } from 'lucide-react';
 
 export default function DashboardPage() {
   const [reports] = useState<ReportWithRelations[]>(mockReportsWithRelations);
@@ -20,16 +19,6 @@ export default function DashboardPage() {
 
   // Get current logged-in user from localStorage
   const currentUser = useCurrentUser();
-
-  const stats = {
-    total: reports.length,
-    draft: reports.filter(r => r.currentStatus === 'draft').length,
-    underReview: reports.filter(r =>
-      r.currentStatus === 'under_review_sector' ||
-      r.currentStatus === 'under_review_dmd'
-    ).length,
-    approved: reports.filter(r => r.currentStatus === 'final_approved').length,
-  };
 
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
@@ -55,6 +44,7 @@ export default function DashboardPage() {
         email: currentUser.email,
         role: currentUser.role,
       }}
+      currentUser={currentUser}
       onTaskClick={handleTaskClick}
     >
       {/* Balance Card */}
@@ -81,42 +71,6 @@ export default function DashboardPage() {
             </h2>
           </div>
         </div>
-      </div>
-
-      {/* Stats Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard
-          title="Total Reports"
-          value={stats.total}
-          color="blue"
-          icon={ListTodo}
-          subtitle="All reports"
-          href="/reports"
-        />
-        <StatCard
-          title="Under Review"
-          value={stats.underReview}
-          color="purple"
-          icon={Timer}
-          subtitle="In progress"
-          href="/reports?status=under_review"
-        />
-        <StatCard
-          title="Approved"
-          value={stats.approved}
-          color="green"
-          icon={CheckCircle2}
-          subtitle="Completed"
-          href="/reports?status=approved"
-        />
-        <StatCard
-          title="Draft"
-          value={stats.draft}
-          color="yellow"
-          icon={NotebookIcon}
-          subtitle="Not submitted"
-          href="/reports?status=draft"
-        />
       </div>
 
       {/* Awaiting Action Widget */}
@@ -150,6 +104,9 @@ export default function DashboardPage() {
         task={selectedTask}
         mode={modalMode}
       />
+
+      {/* User Switcher - Development Only */}
+      <UserSwitcher />
     </DashboardLayout>
   );
 }
