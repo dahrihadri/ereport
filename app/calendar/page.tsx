@@ -61,7 +61,7 @@ export default function CalendarPage() {
       endDate: report.submittedAt || report.updatedAt,
       completionLevel: reportStatusToCompletionLevel(report.currentStatus),
       department: report.division.name,
-      tags: [report.project.code, report.category],
+      tags: [report.project.code, report.category].filter((tag): tag is string => tag !== undefined),
     }))
   , []);
 
