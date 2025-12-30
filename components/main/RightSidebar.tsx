@@ -10,11 +10,10 @@ import SimpleStatCard from '@/components/ui/SimpleStatCard';
 import { filterReportsByUserRole } from '@/lib/permissions';
 
 interface RightSidebarProps {
-  onTaskClick?: (task: Task) => void;
   currentUser?: User;
 }
 
-export default function RightSidebar({ onTaskClick, currentUser }: RightSidebarProps) {
+export default function RightSidebar({ currentUser }: RightSidebarProps) {
   const router = useRouter();
 
   // Use default user if not provided (for demo purposes)
@@ -64,9 +63,8 @@ export default function RightSidebar({ onTaskClick, currentUser }: RightSidebarP
   }));
 
   const handleTaskClick = (task: Task) => {
-    if (onTaskClick) {
-      onTaskClick(task);
-    }
+    // Navigate to the report detail page
+    router.push(`/reports/${task.id}`);
   };
 
   const handleCreateReport = () => {

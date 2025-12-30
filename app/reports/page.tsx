@@ -2,7 +2,6 @@
 
 import { useState, Suspense, useMemo } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import TaskModal from '@/components/ui/TaskModal';
 import FilterButton from '@/components/ui/FilterButton';
 import Pagination from '@/components/ui/Pagination';
 import ReportsTable from '../../components/reports/ReportsTable';
@@ -32,11 +31,7 @@ function ReportsContent() {
   );
 
   const [filterStatus, setFilterStatus] = useState<FilterType>(() => statusParam || 'all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<Task | undefined>(undefined);
-  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');  const [currentPage, setCurrentPage] = useState(1);
   const [selectedReports, setSelectedReports] = useState<string[]>([]);
   const itemsPerPage = 10;
 
@@ -64,20 +59,7 @@ function ReportsContent() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-  };
-
-  const handleTaskClick = (task: Task) => {
-    setSelectedTask(task);
-    setModalMode('view');
-    setIsModalOpen(true);
-  };
-
-  const handleSaveTask = (task: Partial<Task>) => {
-    console.log('Save task:', task);
-    setIsModalOpen(false);
-  };
-
-  const handleReportClick = (report: ReportWithRelations) => {
+  };  const handleReportClick = (report: ReportWithRelations) => {
     // Navigate to report detail page
     router.push(`/reports/${report.id}`);
   };
@@ -174,9 +156,7 @@ function ReportsContent() {
         email: currentUser.email,
         role: currentUser.role,
       }}
-      currentUser={currentUser}
-      onTaskClick={handleTaskClick}
-    >
+      currentUser={currentUser}    >
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-xl">
         <div className="flex items-center justify-between gap-3">
@@ -297,13 +277,6 @@ function ReportsContent() {
       )}
 
       {/* Task Modal */}
-      <TaskModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveTask}
-        task={selectedTask}
-        mode={modalMode}
-      />
 
       {/* Bulk Actions Bar */}
       <BulkActionsBar

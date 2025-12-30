@@ -1,140 +1,73 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import Navbar from '@/components/main/Navbar';
 import CalendarWidget from '@/components/calendar/CalendarWidget';
-import TaskModal from '@/components/ui/TaskModal';
-import { Task } from '@/types';
-import { getUserById } from '@/lib/mock-data';
+import { Task, ReportStatus, CompletionLevel, TaskStatus, TaskPriority } from '@/types';
+import { getUserById, mockReportsWithRelations } from '@/lib/mock-data';
+
+// Helper function to convert ReportStatus to TaskStatus
+function reportStatusToTaskStatus(status: ReportStatus): TaskStatus {
+  const statusMap: Record<ReportStatus, TaskStatus> = {
+    'draft': 'pending',
+    'submitted_to_sector': 'in_progress',
+    'under_review_sector': 'in_progress',
+    'returned_for_revision_sector': 'pending',
+    'approved_by_sector': 'in_progress',
+    'under_review_dmd': 'in_progress',
+    'returned_for_revision_dmd': 'pending',
+    'final_approved': 'completed',
+    'cancelled': 'cancelled',
+  };
+  return statusMap[status];
+}
+
+// Helper function to convert ReportStatus to CompletionLevel
+function reportStatusToCompletionLevel(status: ReportStatus): CompletionLevel {
+  const levelMap: Record<ReportStatus, CompletionLevel> = {
+    'draft': 'not_started',
+    'submitted_to_sector': 'started',
+    'under_review_sector': 'in_progress',
+    'returned_for_revision_sector': 'started',
+    'approved_by_sector': 'nearly_complete',
+    'under_review_dmd': 'nearly_complete',
+    'returned_for_revision_dmd': 'in_progress',
+    'final_approved': 'complete',
+    'cancelled': 'not_started',
+  };
+  return levelMap[status];
+}
 
 export default function CalendarPage() {
+  const router = useRouter();
   const currentUser = getUserById('user-1');
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: '1',
-      title: 'Implement User Authentication System',
-      description: 'Set up Azure AD authentication for the DMDPR system with role-based access control',
-      status: 'in_progress',
-      priority: 'high',
-      assignedTo: 'Ahmad Ibrahim',
-      assignedToEmail: 'ahmad@mcmc.gov.my',
-      createdBy: 'System Admin',
-      createdAt: new Date('2025-01-05'),
-      updatedAt: new Date('2025-01-10'),
-      startDate: new Date('2025-01-05'),
-      endDate: new Date('2025-01-20'),
-      completionLevel: 'in_progress',
-      department: 'IT Development',
-      tags: ['authentication', 'security'],
-    },
-    {
-      id: '2',
-      title: 'Design Dashboard UI/UX',
-      description: 'Create modern and intuitive dashboard interface for project tracking',
-      status: 'completed',
-      priority: 'medium',
-      assignedTo: 'Siti Nurhaliza',
-      assignedToEmail: 'siti@mcmc.gov.my',
-      createdBy: 'Project Manager',
-      createdAt: new Date('2024-12-20'),
-      updatedAt: new Date('2025-01-08'),
-      startDate: new Date('2024-12-20'),
-      endDate: new Date('2025-01-08'),
-      completionLevel: 'complete',
-      department: 'Design',
-      tags: ['ui', 'ux', 'design'],
-    },
-    {
-      id: '3',
-      title: 'Database Schema Implementation',
-      description: 'Set up database tables and relationships for task management system',
-      status: 'pending',
-      priority: 'critical',
-      assignedTo: 'Muhammad Ali',
-      assignedToEmail: 'ali@mcmc.gov.my',
-      createdBy: 'Tech Lead',
-      createdAt: new Date('2025-01-08'),
-      updatedAt: new Date('2025-01-08'),
-      startDate: new Date('2025-01-15'),
-      endDate: new Date('2025-01-25'),
-      completionLevel: 'not_started',
-      department: 'Database',
-      tags: ['database', 'backend'],
-    },
-    {
-      id: '4',
-      title: 'API Development for Task Management',
-      description: 'Develop RESTful APIs for CRUD operations on tasks and projects',
-      status: 'in_progress',
-      priority: 'high',
-      assignedTo: 'Nurul Ain',
-      assignedToEmail: 'nurul@mcmc.gov.my',
-      createdBy: 'Tech Lead',
-      createdAt: new Date('2025-01-06'),
-      updatedAt: new Date('2025-01-12'),
-      startDate: new Date('2025-01-10'),
-      endDate: new Date('2025-01-30'),
-      completionLevel: 'started',
-      department: 'Backend Development',
-      tags: ['api', 'backend'],
-    },
-    {
-      id: '5',
-      title: 'Testing & Quality Assurance',
-      description: 'Comprehensive testing of all system functionalities',
-      status: 'on_hold',
-      priority: 'medium',
-      assignedTo: 'Farah Natasha',
-      assignedToEmail: 'farah@mcmc.gov.my',
-      createdBy: 'QA Manager',
-      createdAt: new Date('2025-01-10'),
-      updatedAt: new Date('2025-01-12'),
-      startDate: new Date('2025-01-20'),
-      endDate: new Date('2025-02-10'),
-      completionLevel: 'started',
-      department: 'Quality Assurance',
-      tags: ['testing', 'qa'],
-    },
-    {
-      id: '6',
-      title: 'Frontend Component Library',
-      description: 'Build reusable React components for the project',
-      status: 'in_progress',
-      priority: 'medium',
-      assignedTo: 'Ahmad Ibrahim',
-      assignedToEmail: 'ahmad@mcmc.gov.my',
-      createdBy: 'Tech Lead',
-      createdAt: new Date('2025-01-12'),
-      updatedAt: new Date('2025-01-14'),
-      startDate: new Date('2025-01-12'),
-      endDate: new Date('2025-01-28'),
-      completionLevel: 'in_progress',
-      department: 'Frontend',
-      tags: ['react', 'components'],
-    },
-    {
-      id: '7',
-      title: 'Security Audit',
-      description: 'Comprehensive security review of the application',
-      status: 'pending',
-      priority: 'critical',
-      assignedTo: 'Muhammad Ali',
-      assignedToEmail: 'ali@mcmc.gov.my',
-      createdBy: 'Security Lead',
-      createdAt: new Date('2025-01-15'),
-      updatedAt: new Date('2025-01-15'),
-      startDate: new Date('2025-02-01'),
-      endDate: new Date('2025-02-15'),
-      completionLevel: 'not_started',
-      department: 'Security',
-      tags: ['security', 'audit'],
-    },
-  ]);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // Convert mock reports to tasks for calendar display
+  const tasksFromReports = useMemo<Task[]>(() =>
+    mockReportsWithRelations.map(report => ({
+      id: report.id,
+      title: report.title,
+      description: report.summary,
+      status: reportStatusToTaskStatus(report.currentStatus),
+      priority: report.priority as TaskPriority,
+      assignedTo: report.createdBy.name,
+      assignedToEmail: report.createdBy.email,
+      createdBy: report.createdBy.name,
+      createdAt: report.createdAt,
+      updatedAt: report.updatedAt,
+      startDate: report.createdAt,
+      endDate: report.submittedAt || report.updatedAt,
+      completionLevel: reportStatusToCompletionLevel(report.currentStatus),
+      department: report.division.name,
+      tags: [report.project.code, report.category],
+    }))
+  , []);
+
+  const [tasks] = useState<Task[]>(tasksFromReports);
+
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('view');
   const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -142,13 +75,12 @@ export default function CalendarPage() {
   const taskRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
 
   const handleTaskClick = (task: Task) => {
-    setSelectedTask(task);
-    setHighlightedTaskId(task.id);
-    setModalMode('view');
-    setIsModalOpen(true);
+    // Navigate to report detail page
+    router.push(`/reports/${task.id}`);
   };
 
   const handleSidebarTaskClick = (task: Task) => {
+    // Highlight task and navigate on double-click
     setHighlightedTaskId(task.id);
     setSelectedTask(task);
   };
@@ -175,16 +107,6 @@ export default function CalendarPage() {
 
     if (tasksOnDate.length > 0 && tasksOnDate[0]) {
       handleTaskClick(tasksOnDate[0]);
-    }
-  };
-
-  const handleSaveTask = (taskData: Partial<Task>) => {
-    if (modalMode === 'edit' && selectedTask) {
-      setTasks(tasks.map(t =>
-        t.id === selectedTask.id
-          ? { ...t, ...taskData, updatedAt: new Date() }
-          : t
-      ));
     }
   };
 
@@ -475,14 +397,6 @@ export default function CalendarPage() {
           </div>
         </div>
       </div>
-
-      <TaskModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveTask}
-        task={selectedTask}
-        mode={modalMode}
-      />
     </div>
   );
 }

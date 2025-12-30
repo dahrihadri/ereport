@@ -2,35 +2,19 @@
 
 import { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import TaskModal from '@/components/ui/TaskModal';
 import AwaitingActionWidget from '@/components/dashboard/AwaitingActionWidget';
 import OverdueReportsWidget from '@/components/dashboard/OverdueReportsWidget';
 import MyDivisionReports from '@/components/dashboard/MyDivisionReports';
 import UserSwitcher from '@/components/ui/UserSwitcher';
-import { ReportWithRelations, Task } from '@/types';
+import { ReportWithRelations } from '@/types';
 import { mockReportsWithRelations } from '@/lib/mock-data';
 import { useCurrentUser } from '@/lib/use-current-user';
 
 export default function DashboardPage() {
   const [reports] = useState<ReportWithRelations[]>(mockReportsWithRelations);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<Task | undefined>(undefined);
-  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
 
   // Get current logged-in user from localStorage
   const currentUser = useCurrentUser();
-
-  const handleTaskClick = (task: Task) => {
-    setSelectedTask(task);
-    setModalMode('view');
-    setIsModalOpen(true);
-  };
-
-  const handleSaveTask = (task: Partial<Task>) => {
-    console.log('Save task:', task);
-    // TODO: Add task to reports list
-    setIsModalOpen(false);
-  };
 
   // Show loading or fallback while user is being loaded
   if (!currentUser) {
@@ -45,7 +29,6 @@ export default function DashboardPage() {
         role: currentUser.role,
       }}
       currentUser={currentUser}
-      onTaskClick={handleTaskClick}
     >
       {/* Balance Card */}
       <div
@@ -95,15 +78,6 @@ export default function DashboardPage() {
           divisionName="IT Development Division"
         />
       )}
-
-      {/* Task Modal */}
-      <TaskModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveTask}
-        task={selectedTask}
-        mode={modalMode}
-      />
 
       {/* User Switcher - Development Only */}
       <UserSwitcher />

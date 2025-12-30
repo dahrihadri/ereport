@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import TaskModal from '@/components/ui/TaskModal';
 import NotificationsTable from '@/components/notifications/NotificationsTable';
 import FilterButton from '@/components/ui/FilterButton';
 import Pagination from '@/components/ui/Pagination';
@@ -46,13 +45,13 @@ const mockNotifications: Notification[] = [
   {
     id: '2',
     title: 'New Comment',
-    message: 'Siti Nurhaliza commented on "Database Schema Implementation"',
+    message: 'Zurul Zahra commented on "Database Schema Implementation"',
     type: 'info',
     time: '1 hour ago',
     read: false,
     details: {
       reportTitle: 'Database Schema Implementation',
-      assignedBy: 'Siti Nurhaliza',
+      assignedBy: 'Zurul Zahra',
       action: 'Commented',
     },
   },
@@ -164,11 +163,7 @@ export default function NotificationsPage() {
   const currentUser = getUserById('user-1');
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const [filterType, setFilterType] = useState<NotificationType>('all');
-  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<Task | undefined>(undefined);
-  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [showUnreadOnly, setShowUnreadOnly] = useState(false);  const [currentPage, setCurrentPage] = useState(1);
   const [isAnimating, setIsAnimating] = useState(false);
   const itemsPerPage = 5;
 
@@ -225,33 +220,14 @@ export default function NotificationsPage() {
       router.push(`/reports/${id}`);
     }
   };
-
-  const handleTaskClick = (task: Task) => {
-    setSelectedTask(task);
-    setModalMode('view');
-    setIsModalOpen(true);
-  };
-
-  const handleCreateReport = () => {
-    setSelectedTask(undefined);
-    setModalMode('create');
-    setIsModalOpen(true);
-  };
-
-  const handleSaveTask = (task: Partial<Task>) => {
-    console.log('Save task:', task);
-    setIsModalOpen(false);
-  };
-
+  const handleCreateReport = () => {  };
   return (
     <DashboardLayout
       user={{
         name: currentUser?.name || 'Ahmad Faizal',
         email: currentUser?.email || 'ahmad.faizal@mcmc.gov.my',
         role: 'DMDD',
-      }}
-      onTaskClick={handleTaskClick}
-    >
+      }}    >
       {/* Header */}
             <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 text-white shadow-xl flex-shrink-0">
               <div className="flex items-center justify-between">
@@ -367,13 +343,6 @@ export default function NotificationsPage() {
       )}
 
       {/* Task Modal */}
-      <TaskModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveTask}
-        task={selectedTask}
-        mode={modalMode}
-      />
     </DashboardLayout>
   );
 }

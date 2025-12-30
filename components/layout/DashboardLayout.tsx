@@ -4,7 +4,7 @@ import { ReactNode, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/main/Navbar';
 import RightSidebar from '@/components/main/RightSidebar';
-import { Task, User } from '@/types';
+import { User } from '@/types';
 import { Menu, X } from 'lucide-react';
 
 interface DashboardLayoutProps {
@@ -15,10 +15,9 @@ interface DashboardLayoutProps {
     role: string;
   };
   currentUser?: User;
-  onTaskClick?: (task: Task) => void;
 }
 
-export default function DashboardLayout({ children, user, currentUser, onTaskClick }: DashboardLayoutProps) {
+export default function DashboardLayout({ children, user, currentUser }: DashboardLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
@@ -48,7 +47,7 @@ export default function DashboardLayout({ children, user, currentUser, onTaskCli
 
           {/* RIGHT SIDE - Sidebar with independent scroll - Hidden on mobile */}
           <div className="hidden xl:block xl:col-span-1 overflow-y-auto">
-            <RightSidebar onTaskClick={onTaskClick} currentUser={currentUser} />
+            <RightSidebar currentUser={currentUser} />
           </div>
         </div>
       </div>
@@ -88,13 +87,7 @@ export default function DashboardLayout({ children, user, currentUser, onTaskCli
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               className="xl:hidden fixed top-16 right-0 bottom-0 w-full sm:w-96 bg-white shadow-2xl z-50 overflow-y-auto"
             >
-              <RightSidebar
-                currentUser={currentUser}
-                onTaskClick={(task) => {
-                  onTaskClick?.(task);
-                  setIsSidebarOpen(false);
-                }}
-              />
+              <RightSidebar currentUser={currentUser} />
             </motion.div>
           </>
         )}

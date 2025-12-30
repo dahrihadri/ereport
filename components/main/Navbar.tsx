@@ -37,7 +37,7 @@ export default function Navbar({ user }: NavbarProps) {
     {
       id: '2',
       title: 'New Comment',
-      message: 'Siti Nurhaliza commented on "Database Schema Implementation"',
+      message: 'Zurul Zahra commented on "Database Schema Implementation"',
       type: 'info',
       time: '1 hour ago',
       read: false,
@@ -280,14 +280,6 @@ export default function Navbar({ user }: NavbarProps) {
                     >
                       <User className="w-4 h-4" />
                       Profile Settings
-                    </Link>
-                    <Link
-                      href="/tasks"
-                      onClick={() => setShowUserMenu(false)}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      <ClipboardList className="w-4 h-4" />
-                      My Tasks
                     </Link>
                     {user?.role === 'SYSTEM_ADMIN' && (
                       <Link

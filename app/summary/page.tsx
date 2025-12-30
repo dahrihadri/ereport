@@ -6,14 +6,26 @@ import StatCard from '@/components/ui/StatCard';
 import { mockReportsWithRelations, getUserById, mockUsers } from '@/lib/mock-data';
 import { ReportWithRelations, Task } from '@/types';
 import { CheckCircle2, RefreshCw, FileText, Clock } from 'lucide-react';
-import TaskModal from '@/components/ui/TaskModal';
+import { useCurrentUser } from '@/lib/use-current-user';
 
 export default function SummaryPage() {
-  const [reports] = useState<ReportWithRelations[]>(mockReportsWithRelations);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<Task | undefined>(undefined);
-  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view'>('create');
-  const currentUser = getUserById('user-1');
+  const [allReports] = useState<ReportWithRelations[]>(mockReportsWithRelations);
+
+  // Get current logged-in user from localStorage
+  const currentUser = useCurrentUser();
+
+  // Show loading while user is being loaded
+  if (!currentUser) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  // Filter reports by user's division(s)
+  // Chief of Sector and Deputy MD can see all reports
+  const reports = (currentUser.role === 'CHIEF_OF_SECTOR' || currentUser.role === 'DEPUTY_MD')
+    ? allReports
+    : allReports.filter(report =>
+        currentUser.divisionIds.includes(report.division.id)
+      );
 
   // Calculate statistics
   const stats = {
@@ -59,8 +71,16 @@ export default function SummaryPage() {
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, 5);
 
-  // User workload - based on actual mock data
-  const userReportCounts = mockUsers.map(user => ({
+  // User workload - based on actual mock data, filtered by division
+  // Chief of Sector and Deputy MD can see all users
+  // Other roles only see users from their division(s)
+  const divisionUsers = (currentUser.role === 'CHIEF_OF_SECTOR' || currentUser.role === 'DEPUTY_MD')
+    ? mockUsers
+    : mockUsers.filter(user =>
+        user.divisionIds.some(divId => currentUser.divisionIds.includes(divId))
+      );
+
+  const userReportCounts = divisionUsers.map(user => ({
     user,
     count: reports.filter(r => r.createdByUserId === user.id).length
   })).filter(item => item.count > 0);
@@ -68,35 +88,18 @@ export default function SummaryPage() {
   const totalReports = userReportCounts.reduce((sum, item) => sum + item.count, 0);
   const userWorkload = userReportCounts.map(item => ({
     name: item.user.name,
-    percentage: Math.round((item.count / totalReports) * 100),
+    percentage: totalReports > 0 ? Math.round((item.count / totalReports) * 100) : 0,
     count: item.count
   })).sort((a, b) => b.percentage - a.percentage);
-
-  const handleTaskClick = (task: Task) => {
-    setSelectedTask(task);
-    setModalMode('view');
-    setIsModalOpen(true);
-  };
-
-  const handleCreateReport = () => {
-    setSelectedTask(undefined);
-    setModalMode('create');
-    setIsModalOpen(true);
-  };
-
-  const handleSaveTask = (task: Partial<Task>) => {
-    console.log('Save task:', task);
-    setIsModalOpen(false);
-  };
-
+  const handleCreateReport = () => {  };
   return (
     <DashboardLayout
       user={{
-        name: currentUser?.name || 'Ahmad Faizal',
-        email: currentUser?.email || 'ahmad.faizal@mcmc.gov.my',
-        role: 'DMDD',
+        name: currentUser.name,
+        email: currentUser.email,
+        role: currentUser.role,
       }}
-      onTaskClick={handleTaskClick}
+      currentUser={currentUser}
     >
       {/* Top Statistics Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -240,29 +243,45 @@ export default function SummaryPage() {
                 <p className="text-sm text-gray-600 mb-6">Stay up to date with what&apos;s happening in your division.</p>
 
                 <div className="space-y-4">
-                  {recentActivity.map((report, idx) => (
-                    <div key={report.id} className="flex gap-3">
-                      <div className="flex-shrink-0">
-                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                          <span className="text-xs font-semibold text-blue-700">
-                            {report.createdBy.name.split(' ').map(n => n[0]).join('')}
-                          </span>
+                  {recentActivity.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <p className="text-sm">No recent activity</p>
+                    </div>
+                  ) : (
+                    recentActivity.map((report, idx) => (
+                      <div
+                        key={report.id}
+                        className="flex gap-3 hover:bg-gray-50 p-2 rounded-lg transition-colors cursor-pointer"
+                        onClick={() => window.location.href = `/reports/${report.id}`}
+                      >
+                        <div className="flex-shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                            <span className="text-xs font-semibold text-blue-700">
+                              {report.createdBy.name.split(' ').map(n => n[0]).join('')}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-800">
+                            <span className="font-semibold">{report.createdBy.name}</span>
+                            {' '}updated{' '}
+                            <span className="text-blue-600 hover:underline">
+                              {report.title}
+                            </span>
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {new Date(report.updatedAt).toLocaleDateString('en-MY', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
                         </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-800">
-                          <span className="font-semibold">{report.createdBy.name}</span>
-                          {' '}updated{' '}
-                          <span className="text-blue-600 hover:underline cursor-pointer">
-                            {report.title}
-                          </span>
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {new Date(report.updatedAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -347,13 +366,6 @@ export default function SummaryPage() {
             </div>
 
       {/* Task Modal */}
-      <TaskModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveTask}
-        task={selectedTask}
-        mode={modalMode}
-      />
     </DashboardLayout>
   );
 }
