@@ -10,9 +10,11 @@ import {
   getAllUsers,
   getDivisionsBySectorId,
 } from '@/lib/admin-mock-data';
-import { Plus, Edit2, Building2 } from 'lucide-react';
+import { Plus, Edit2, Building2, FileSpreadsheet } from 'lucide-react';
 import SectorForm from '@/components/admin/SectorForm';
 import DeleteButton from '@/components/admin/DeleteButton';
+import { exportSectorsToCSV } from '@/lib/export-utils';
+import { logAuditEvent, detectChanges } from '@/lib/audit-trail';
 
 export default function SectorsPage() {
   const [sectors, setSectors] = useState<Sector[]>(getAllSectors());
@@ -34,10 +36,32 @@ export default function SectorsPage() {
   };
 
   const handleSaveSector = (sectorData: Partial<Sector>) => {
+    const currentUser = { id: 'admin-1', name: 'System Admin' };
+
     if (selectedSector) {
+      const changes = detectChanges(selectedSector, sectorData);
       updateSector(selectedSector.id, sectorData);
+
+      logAuditEvent(
+        currentUser.id,
+        currentUser.name,
+        'UPDATE',
+        'SECTOR',
+        selectedSector.id,
+        sectorData.name || selectedSector.name,
+        changes
+      );
     } else {
-      createSector(sectorData as Omit<Sector, 'id' | 'createdAt' | 'updatedAt'>);
+      const newSector = createSector(sectorData as Omit<Sector, 'id' | 'createdAt' | 'updatedAt'>);
+
+      logAuditEvent(
+        currentUser.id,
+        currentUser.name,
+        'CREATE',
+        'SECTOR',
+        newSector.id,
+        newSector.name
+      );
     }
     loadSectors();
     setIsFormOpen(false);
@@ -45,7 +69,22 @@ export default function SectorsPage() {
 
   const handleDeleteSector = async (sectorId: string): Promise<boolean> => {
     try {
+      const currentUser = { id: 'admin-1', name: 'System Admin' };
+      const sector = getAllSectors().find(s => s.id === sectorId);
+
       deleteSector(sectorId);
+
+      if (sector) {
+        logAuditEvent(
+          currentUser.id,
+          currentUser.name,
+          'DELETE',
+          'SECTOR',
+          sectorId,
+          sector.name
+        );
+      }
+
       loadSectors();
       return true;
     } catch (error) {
@@ -74,13 +113,24 @@ export default function SectorsPage() {
             Manage organizational sectors and their leadership
           </p>
         </div>
-        <button
-          onClick={handleCreateSector}
-          className="flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm sm:text-base whitespace-nowrap"
-        >
-          <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span>Create Sector</span>
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => exportSectorsToCSV(sectors)}
+            disabled={sectors.length === 0}
+            className="flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm sm:text-base whitespace-nowrap disabled:bg-gray-400"
+          >
+            <FileSpreadsheet className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Export CSV</span>
+            <span className="sm:hidden">Export</span>
+          </button>
+          <button
+            onClick={handleCreateSector}
+            className="flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm sm:text-base whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span>Create Sector</span>
+          </button>
+        </div>
       </div>
 
       {/* Stats */}

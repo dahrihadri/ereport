@@ -11,8 +11,9 @@ import { ReportWithRelations, Task, ReportStatus } from '@/types';
 import { mockReportsWithRelations } from '@/lib/mock-data';
 import { useCurrentUser } from '@/lib/use-current-user';
 import { filterReportsByUserRole } from '@/lib/permissions';
-import { Search, Filter, FileText } from 'lucide-react';
+import { Search, Filter, FileText, Download, FileSpreadsheet } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { exportReportsToCSV } from '@/lib/export-utils';
 
 type FilterType = 'all' | ReportStatus;
 
@@ -138,6 +139,15 @@ function ReportsContent() {
     // Add bulk submit logic here
   };
 
+  // Export handlers
+  const handleExportCSV = () => {
+    const reportsToExport = selectedReports.length > 0
+      ? reports.filter(r => selectedReports.includes(r.id))
+      : filteredReports;
+
+    exportReportsToCSV(reportsToExport);
+  };
+
   // Count reports by status
   const statusCounts = {
     all: reports.length,
@@ -238,6 +248,33 @@ function ReportsContent() {
             color="red"
             onClick={() => handleFilterChange('returned_for_revision_sector')}
           />
+        </div>
+      </div>
+
+      {/* Actions Bar */}
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-3 sm:p-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <FileText className="w-4 h-4" />
+            <span className="font-medium">
+              {selectedReports.length > 0
+                ? `${selectedReports.length} report${selectedReports.length !== 1 ? 's' : ''} selected`
+                : `Showing ${filteredReports.length} of ${reports.length} reports`}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={handleExportCSV}
+              disabled={filteredReports.length === 0}
+              className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span className="hidden sm:inline">
+                Export {selectedReports.length > 0 ? 'Selected' : 'All'}
+              </span>
+              <span className="sm:hidden">Export</span>
+            </button>
+          </div>
         </div>
       </div>
 

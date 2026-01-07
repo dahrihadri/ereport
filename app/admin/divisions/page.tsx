@@ -10,10 +10,12 @@ import {
   getAllSectors,
   getAllUsers,
 } from '@/lib/admin-mock-data';
-import { Plus } from 'lucide-react';
+import { Plus, FileSpreadsheet } from 'lucide-react';
 import DivisionForm from '@/components/admin/DivisionForm';
 import OrgStructureTree from '@/components/admin/OrgStructureTree';
 import DeleteButton from '@/components/admin/DeleteButton';
+import { exportDivisionsToCSV } from '@/lib/export-utils';
+import { logAuditEvent, detectChanges } from '@/lib/audit-trail';
 
 export default function DivisionsPage() {
   const [divisions, setDivisions] = useState<Division[]>(getAllDivisions());
@@ -36,10 +38,32 @@ export default function DivisionsPage() {
   };
 
   const handleSaveDivision = (divisionData: Partial<Division>) => {
+    const currentUser = { id: 'admin-1', name: 'System Admin' };
+
     if (selectedDivision) {
+      const changes = detectChanges(selectedDivision, divisionData);
       updateDivision(selectedDivision.id, divisionData);
+
+      logAuditEvent(
+        currentUser.id,
+        currentUser.name,
+        'UPDATE',
+        'DIVISION',
+        selectedDivision.id,
+        divisionData.name || selectedDivision.name,
+        changes
+      );
     } else {
-      createDivision(divisionData as Omit<Division, 'id' | 'createdAt' | 'updatedAt'>);
+      const newDivision = createDivision(divisionData as Omit<Division, 'id' | 'createdAt' | 'updatedAt'>);
+
+      logAuditEvent(
+        currentUser.id,
+        currentUser.name,
+        'CREATE',
+        'DIVISION',
+        newDivision.id,
+        newDivision.name
+      );
     }
     loadDivisions();
     setIsFormOpen(false);
@@ -47,7 +71,22 @@ export default function DivisionsPage() {
 
   const handleDeleteDivision = async (divisionId: string): Promise<boolean> => {
     try {
+      const currentUser = { id: 'admin-1', name: 'System Admin' };
+      const division = divisions.find(d => d.id === divisionId);
+
       deleteDivision(divisionId);
+
+      if (division) {
+        logAuditEvent(
+          currentUser.id,
+          currentUser.name,
+          'DELETE',
+          'DIVISION',
+          divisionId,
+          division.name
+        );
+      }
+
       loadDivisions();
       return true;
     } catch (error) {
@@ -96,13 +135,24 @@ export default function DivisionsPage() {
             </button>
           </div>
 
-          <button
-            onClick={handleCreateDivision}
-            className="flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm sm:text-base whitespace-nowrap"
-          >
-            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span>Create Division</span>
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => exportDivisionsToCSV(divisions)}
+              disabled={divisions.length === 0}
+              className="flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm sm:text-base whitespace-nowrap disabled:bg-gray-400"
+            >
+              <FileSpreadsheet className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Export CSV</span>
+              <span className="sm:hidden">Export</span>
+            </button>
+            <button
+              onClick={handleCreateDivision}
+              className="flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm sm:text-base whitespace-nowrap"
+            >
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>Create Division</span>
+            </button>
+          </div>
         </div>
       </div>
 

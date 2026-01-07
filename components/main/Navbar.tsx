@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Bell, ChevronDown, User, Settings, ClipboardList, LogOut, Menu, X, Calendar, LayoutDashboard, BarChart3, Shield } from 'lucide-react';
+import { mockReportsWithRelations } from '@/lib/mock-data';
 
 interface NavbarProps {
   user?: {
@@ -24,49 +25,76 @@ export default function Navbar({ user }: NavbarProps) {
     router.push('/login');
   };
 
-  // Mock notifications data
-  const notifications = [
-    {
-      id: '1',
-      title: 'Report Approved',
-      message: 'Your report "Q1 Financial Analysis" has been approved by Ahmad Faizal',
-      type: 'success',
-      time: '5 minutes ago',
-      read: false,
-    },
-    {
-      id: '2',
-      title: 'New Comment',
-      message: 'Zurul Zahra commented on "Database Schema Implementation"',
-      type: 'info',
-      time: '1 hour ago',
-      read: false,
-    },
-    {
-      id: '3',
-      title: 'Report Rejected',
-      message: 'Your report "Market Research" needs revision. Please check the feedback.',
-      type: 'error',
-      time: '2 hours ago',
-      read: false,
-    },
-    {
-      id: '4',
-      title: 'Task Assigned',
-      message: 'You have been assigned to "API Development for Task Management"',
-      type: 'info',
-      time: '3 hours ago',
-      read: true,
-    },
-    {
-      id: '5',
-      title: 'Deadline Approaching',
-      message: 'Report "User Authentication System" is due in 2 days',
-      type: 'warning',
-      time: '5 hours ago',
-      read: true,
-    },
-  ];
+  // Generate notifications from actual mock data
+  const generateNotifications = () => {
+    const notifs = [];
+    const reports = mockReportsWithRelations;
+
+    // Get the first few reports and create notifications based on their status
+    if (reports[0]) {
+      notifs.push({
+        id: '1',
+        title: 'Report Approved',
+        message: `Your report "${reports[0].title}" has been approved by ${reports[0].createdBy.name}`,
+        type: 'success' as const,
+        time: '5 minutes ago',
+        read: false,
+        reportId: reports[0].id,
+      });
+    }
+
+    if (reports[1]) {
+      notifs.push({
+        id: '2',
+        title: 'New Comment',
+        message: `${reports[1].createdBy.name} commented on "${reports[1].title}"`,
+        type: 'info' as const,
+        time: '1 hour ago',
+        read: false,
+        reportId: reports[1].id,
+      });
+    }
+
+    if (reports[4]) {
+      notifs.push({
+        id: '3',
+        title: 'Report Returned for Revision',
+        message: `Your report "${reports[4].title}" needs revision. Please check the feedback.`,
+        type: 'error' as const,
+        time: '2 hours ago',
+        read: false,
+        reportId: reports[4].id,
+      });
+    }
+
+    if (reports[3]) {
+      notifs.push({
+        id: '4',
+        title: 'Draft Report',
+        message: `You have a draft report "${reports[3].title}" waiting for submission`,
+        type: 'info' as const,
+        time: '3 hours ago',
+        read: true,
+        reportId: reports[3].id,
+      });
+    }
+
+    if (reports[2]) {
+      notifs.push({
+        id: '5',
+        title: 'Report Awaiting Approval',
+        message: `Report "${reports[2].title}" is awaiting final approval`,
+        type: 'warning' as const,
+        time: '5 hours ago',
+        read: true,
+        reportId: reports[2].id,
+      });
+    }
+
+    return notifs;
+  };
+
+  const notifications = generateNotifications();
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -112,7 +140,7 @@ export default function Navbar({ user }: NavbarProps) {
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo and Title */}
-          <div className="flex items-center gap-3 sm:gap-4">
+          <Link href="/dashboard" className="flex items-center gap-3 sm:gap-4 hover:opacity-80 transition-opacity">
             <div className="relative w-8 h-8 sm:w-10 sm:h-10">
               <Image
                 src="/MCMC_Logo.png"
@@ -127,7 +155,7 @@ export default function Navbar({ user }: NavbarProps) {
               <p className="text-xs text-gray-500 hidden md:block">Project Management System</p>
             </div>
             <h1 className="text-lg font-bold text-gray-800 sm:hidden">DMDPR</h1>
-          </div>
+          </Link>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-4">
@@ -201,7 +229,13 @@ export default function Navbar({ user }: NavbarProps) {
                           {notifications.map((notification) => (
                             <button
                               key={notification.id}
-                              className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
+                              onClick={() => {
+                                if (notification.reportId) {
+                                  setShowNotifications(false);
+                                  router.push(`/reports/${notification.reportId}`);
+                                }
+                              }}
+                              className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-all duration-200 cursor-pointer group ${
                                 !notification.read ? 'bg-blue-50/50' : ''
                               }`}
                             >
@@ -209,7 +243,7 @@ export default function Navbar({ user }: NavbarProps) {
                                 {getNotificationIcon(notification.type)}
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-start justify-between gap-2 mb-1">
-                                    <h4 className="text-sm font-semibold text-gray-800">
+                                    <h4 className="text-sm font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
                                       {notification.title}
                                     </h4>
                                     {!notification.read && (
@@ -219,7 +253,7 @@ export default function Navbar({ user }: NavbarProps) {
                                   <p className="text-xs text-gray-600 line-clamp-2 mb-1">
                                     {notification.message}
                                   </p>
-                                  <p className="text-xs text-gray-400">
+                                  <p className="text-xs text-gray-400 group-hover:text-gray-600 transition-colors">
                                     {notification.time}
                                   </p>
                                 </div>

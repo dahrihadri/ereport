@@ -4,6 +4,9 @@ import { User, UserRole } from '@/types';
 import { X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getAllSectors, getAllDivisions } from '@/lib/admin-mock-data';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { userFormSchema, type UserFormData } from '@/lib/validations/admin-schemas';
 
 interface UserFormProps {
   isOpen: boolean;
@@ -17,16 +20,45 @@ function UserFormContent({ onClose, onSave, user, isOpen }: UserFormProps) {
   const sectors = getAllSectors();
   const divisions = getAllDivisions();
 
-  // Initialize form data from user prop
-  const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    role: (user?.role || 'HEAD_OF_DIVISION') as UserRole,
-    sectorIds: user?.sectorIds || [] as string[],
-    divisionIds: user?.divisionIds || [] as string[],
-    azureAdObjectId: user?.azureAdObjectId || '',
-    isActive: user?.isActive ?? true,
+  // Initialize react-hook-form with Zod validation
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    watch,
+    setValue,
+    reset,
+  } = useForm({
+    resolver: zodResolver(userFormSchema),
+    defaultValues: {
+      name: user?.name || '',
+      email: user?.email || '',
+      role: (user?.role || 'HEAD_OF_DIVISION') as UserRole,
+      sectorIds: user?.sectorIds || [],
+      divisionIds: user?.divisionIds || [],
+      azureAdObjectId: user?.azureAdObjectId || '',
+      isActive: user?.isActive ?? true,
+    },
   });
+
+  // Watch form values for multi-select
+  const sectorIds = watch('sectorIds');
+  const divisionIds = watch('divisionIds');
+
+  // Reset form when user changes or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      reset({
+        name: user?.name || '',
+        email: user?.email || '',
+        role: (user?.role || 'HEAD_OF_DIVISION') as UserRole,
+        sectorIds: user?.sectorIds || [],
+        divisionIds: user?.divisionIds || [],
+        azureAdObjectId: user?.azureAdObjectId || '',
+        isActive: user?.isActive ?? true,
+      });
+    }
+  }, [user, isOpen, reset]);
 
   // Lock body scroll when form is open
   useEffect(() => {
@@ -42,27 +74,24 @@ function UserFormContent({ onClose, onSave, user, isOpen }: UserFormProps) {
     };
   }, [isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
+  const onSubmit = (data: UserFormData) => {
+    onSave(data);
   };
 
   const toggleSector = (sectorId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      sectorIds: prev.sectorIds.includes(sectorId)
-        ? prev.sectorIds.filter(id => id !== sectorId)
-        : [...prev.sectorIds, sectorId],
-    }));
+    const currentSectorIds = sectorIds || [];
+    const newSectorIds = currentSectorIds.includes(sectorId)
+      ? currentSectorIds.filter(id => id !== sectorId)
+      : [...currentSectorIds, sectorId];
+    setValue('sectorIds', newSectorIds);
   };
 
   const toggleDivision = (divisionId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      divisionIds: prev.divisionIds.includes(divisionId)
-        ? prev.divisionIds.filter(id => id !== divisionId)
-        : [...prev.divisionIds, divisionId],
-    }));
+    const currentDivisionIds = divisionIds || [];
+    const newDivisionIds = currentDivisionIds.includes(divisionId)
+      ? currentDivisionIds.filter(id => id !== divisionId)
+      : [...currentDivisionIds, divisionId];
+    setValue('divisionIds', newDivisionIds);
   };
 
   if (!isOpen) return null;
@@ -120,7 +149,7 @@ function UserFormContent({ onClose, onSave, user, isOpen }: UserFormProps) {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex-1 overflow-y-auto p-4 sm:p-6">
           <div className="space-y-4">
             {/* Basic Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -130,11 +159,16 @@ function UserFormContent({ onClose, onSave, user, isOpen }: UserFormProps) {
                 </label>
                 <input
                   type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
-                  required
+                  {...register('name')}
+                  className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                    errors.name
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-red-500'
+                  }`}
                 />
+                {errors.name && (
+                  <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -142,11 +176,17 @@ function UserFormContent({ onClose, onSave, user, isOpen }: UserFormProps) {
                 </label>
                 <input
                   type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
-                  required
+                  {...register('email')}
+                  className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                    errors.email
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-red-500'
+                  }`}
+                  placeholder="user@mcmc.gov.my"
                 />
+                {errors.email && (
+                  <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>
+                )}
               </div>
             </div>
 
@@ -156,10 +196,12 @@ function UserFormContent({ onClose, onSave, user, isOpen }: UserFormProps) {
                   Role *
                 </label>
                 <select
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
-                  required
+                  {...register('role')}
+                  className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                    errors.role
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-red-500'
+                  }`}
                 >
                   {roleOptions.map(option => (
                     <option key={option.value} value={option.value}>
@@ -167,6 +209,9 @@ function UserFormContent({ onClose, onSave, user, isOpen }: UserFormProps) {
                     </option>
                   ))}
                 </select>
+                {errors.role && (
+                  <p className="mt-1 text-xs text-red-600">{errors.role.message}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -174,12 +219,17 @@ function UserFormContent({ onClose, onSave, user, isOpen }: UserFormProps) {
                 </label>
                 <input
                   type="text"
-                  value={formData.azureAdObjectId}
-                  onChange={(e) => setFormData({ ...formData, azureAdObjectId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                  {...register('azureAdObjectId')}
+                  className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                    errors.azureAdObjectId
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-red-500'
+                  }`}
                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                  required
                 />
+                {errors.azureAdObjectId && (
+                  <p className="mt-1 text-xs text-red-600">{errors.azureAdObjectId.message}</p>
+                )}
               </div>
             </div>
 
@@ -188,8 +238,7 @@ function UserFormContent({ onClose, onSave, user, isOpen }: UserFormProps) {
               <input
                 type="checkbox"
                 id="isActive"
-                checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                {...register('isActive')}
                 className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
               />
               <label htmlFor="isActive" className="ml-2 text-sm text-gray-700">
@@ -208,7 +257,7 @@ function UserFormContent({ onClose, onSave, user, isOpen }: UserFormProps) {
                     <input
                       type="checkbox"
                       id={`sector-${sector.id}`}
-                      checked={formData.sectorIds.includes(sector.id)}
+                      checked={sectorIds?.includes(sector.id) || false}
                       onChange={() => toggleSector(sector.id)}
                       className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
                     />
@@ -231,7 +280,7 @@ function UserFormContent({ onClose, onSave, user, isOpen }: UserFormProps) {
                     <input
                       type="checkbox"
                       id={`division-${division.id}`}
-                      checked={formData.divisionIds.includes(division.id)}
+                      checked={divisionIds?.includes(division.id) || false}
                       onChange={() => toggleDivision(division.id)}
                       className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
                     />
@@ -254,9 +303,16 @@ function UserFormContent({ onClose, onSave, user, isOpen }: UserFormProps) {
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors shadow-sm"
+                disabled={isSubmitting}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                {user ? 'Save Changes' : 'Create User'}
+                {isSubmitting && (
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                )}
+                {isSubmitting ? 'Saving...' : (user ? 'Save Changes' : 'Create User')}
               </button>
             </div>
           </div>

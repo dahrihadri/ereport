@@ -17,8 +17,42 @@ export interface AuditLog {
   metadata?: Record<string, any>;
 }
 
-// In-memory audit log store
-let auditLogs: AuditLog[] = [];
+const AUDIT_STORAGE_KEY = 'mcmc_audit_logs';
+const MAX_LOGS = 1000;
+
+// Load audit logs from localStorage
+function loadLogsFromStorage(): AuditLog[] {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const stored = localStorage.getItem(AUDIT_STORAGE_KEY);
+    if (!stored) return [];
+
+    const logs = JSON.parse(stored);
+    // Convert timestamp strings back to Date objects
+    return logs.map((log: any) => ({
+      ...log,
+      timestamp: new Date(log.timestamp),
+    }));
+  } catch (error) {
+    console.error('Failed to load audit logs from localStorage:', error);
+    return [];
+  }
+}
+
+// Save audit logs to localStorage
+function saveLogsToStorage(logs: AuditLog[]): void {
+  if (typeof window === 'undefined') return;
+
+  try {
+    localStorage.setItem(AUDIT_STORAGE_KEY, JSON.stringify(logs));
+  } catch (error) {
+    console.error('Failed to save audit logs to localStorage:', error);
+  }
+}
+
+// In-memory audit log store with localStorage persistence
+let auditLogs: AuditLog[] = loadLogsFromStorage();
 
 export function logAuditEvent(
   userId: string,
@@ -45,10 +79,13 @@ export function logAuditEvent(
 
   auditLogs.unshift(log); // Add to beginning for newest first
 
-  // Keep only last 1000 logs in memory
-  if (auditLogs.length > 1000) {
-    auditLogs = auditLogs.slice(0, 1000);
+  // Keep only last MAX_LOGS logs in memory
+  if (auditLogs.length > MAX_LOGS) {
+    auditLogs = auditLogs.slice(0, MAX_LOGS);
   }
+
+  // Persist to localStorage
+  saveLogsToStorage(auditLogs);
 }
 
 export function getAuditLogs(filters?: {
@@ -85,6 +122,7 @@ export function getAuditLogs(filters?: {
 
 export function clearAuditLogs(): void {
   auditLogs = [];
+  saveLogsToStorage(auditLogs);
 }
 
 export function getEntityHistory(entity: AuditLog['entity'], entityId: string): AuditLog[] {

@@ -8,15 +8,14 @@ import {
   ChevronDown,
   User,
   Settings,
-  LogOut,
   Menu,
   X,
-  Shield,
   LayoutDashboard,
   Users,
   Building2,
   Briefcase,
   FolderTree,
+  FileText,
 } from 'lucide-react';
 import SignOutButton from './SignOutButton';
 
@@ -54,6 +53,12 @@ export default function AdminNavbar({
       icon: Briefcase,
       href: '/admin/projects',
     },
+    {
+      id: 'audit',
+      label: 'Audit Trail',
+      icon: FileText,
+      href: '/admin/audit',
+    },
   ];
 
   const handleTabClick = (tab: (typeof tabs)[0]) => {
@@ -67,7 +72,7 @@ export default function AdminNavbar({
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo and Title */}
-          <div className="flex items-center gap-3 sm:gap-4">
+          <Link href="/admin/users" className="flex items-center gap-3 sm:gap-4 hover:opacity-80 transition-opacity">
             <div className="relative w-8 h-8 sm:w-10 sm:h-10">
               <Image
                 src="/MCMC_Logo.png"
@@ -88,19 +93,10 @@ export default function AdminNavbar({
             <h1 className="text-lg font-bold text-gray-800 sm:hidden">
               DMDPR Admin
             </h1>
-          </div>
+          </Link>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-4">
-            {/* Back to Dashboard Link */}
-            {/* <Link
-              href="/dashboard"
-              className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
-            >
-              <LayoutDashboard className="w-5 h-5" />
-              <span className="text-sm font-medium">Dashboard</span>
-            </Link> */}
-
             {/* User Menu */}
             <div className="relative">
               <button
@@ -141,12 +137,20 @@ export default function AdminNavbar({
                       </p>
                     </div>
                     <Link
-                      href="/profile"
+                      href="/admin/profile"
                       onClick={() => setShowUserMenu(false)}
                       className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                     >
                       <User className="w-4 h-4" />
-                      Profile Settings
+                      Admin Profile
+                    </Link>
+                    <Link
+                      href="/admin/settings"
+                      onClick={() => setShowUserMenu(false)}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <Settings className="w-4 h-4" />
+                      System Settings
                     </Link>
                     <Link
                       href="/dashboard"
@@ -155,14 +159,6 @@ export default function AdminNavbar({
                     >
                       <LayoutDashboard className="w-4 h-4" />
                       User Dashboard
-                    </Link>
-                    <Link
-                      href="/settings"
-                      onClick={() => setShowUserMenu(false)}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      <Settings className="w-4 h-4" />
-                      Settings
                     </Link>
                     <hr className="my-2 border-gray-100" />
                     <div className="px-2">
@@ -263,27 +259,27 @@ export default function AdminNavbar({
 
             {/* Navigation Links */}
             <Link
+              href="/admin/profile"
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+            >
+              <User className="w-5 h-5" />
+              Admin Profile
+            </Link>
+
+            <Link
+              href="/admin/settings"
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+            >
+              <Settings className="w-5 h-5" />
+              System Settings
+            </Link>
+
+            <Link
               href="/dashboard"
               className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
             >
               <LayoutDashboard className="w-5 h-5" />
               User Dashboard
-            </Link>
-
-            <Link
-              href="/profile"
-              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-            >
-              <User className="w-5 h-5" />
-              Profile Settings
-            </Link>
-
-            <Link
-              href="/settings"
-              className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-            >
-              <Settings className="w-5 h-5" />
-              Settings
             </Link>
 
             <hr className="border-gray-200" />

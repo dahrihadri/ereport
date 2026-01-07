@@ -75,8 +75,8 @@ export default function ReportTimeline({ statusHistory }: ReportTimelineProps) {
       </div>
 
       {/* Horizontal Flow Timeline */}
-      <div className="overflow-x-auto scrollbar-hide">
-        <div className="inline-flex gap-2 sm:gap-3 pb-4 px-1 min-w-full">
+      <div className="overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-blue-300 scrollbar-track-gray-100 hover:scrollbar-thumb-blue-400">
+        <div className="inline-flex gap-2 sm:gap-3 pb-4 px-1">
           {sortedHistory.map((history, index) => {
             const actionUser = getUserById(history.actionByUserId);
             const toStatusConfig = getStatusIcon(history.toStatus);
@@ -87,7 +87,7 @@ export default function ReportTimeline({ statusHistory }: ReportTimelineProps) {
             return (
               <div key={history.id} className="flex items-center gap-2 sm:gap-3">
                 {/* Status Card */}
-                <div className={`flex-shrink-0 w-56 sm:w-64 bg-white rounded-lg border-2 p-2.5 sm:p-3 transition-all ${
+                <div className={`flex-shrink-0 w-64 sm:w-72 min-h-[240px] bg-white rounded-lg border-2 p-2.5 sm:p-3 transition-all flex flex-col ${
                   isLatest ? 'border-blue-400 shadow-lg' : 'border-gray-200'
                 }`}>
                   {/* Header with Icon and Step */}
@@ -129,21 +129,23 @@ export default function ReportTimeline({ statusHistory }: ReportTimelineProps) {
 
                   {/* Transition */}
                   <div className="flex items-center gap-1 text-xs mb-2">
-                    <span className="px-1.5 sm:px-2 py-0.5 bg-gray-100 rounded text-gray-700 font-medium truncate max-w-[4rem] sm:max-w-[5rem]" title={getStatusLabel(history.fromStatus)}>
+                    <span className="px-1.5 sm:px-2 py-0.5 bg-gray-100 rounded text-gray-700 font-medium text-center text-[10px] sm:text-xs leading-tight" title={getStatusLabel(history.fromStatus)}>
                       {getStatusLabel(history.fromStatus)}
                     </span>
                     <ArrowRight className="w-3 h-3 text-blue-600 flex-shrink-0" />
-                    <span className="px-1.5 sm:px-2 py-0.5 bg-blue-600 text-white rounded font-medium truncate max-w-[4rem] sm:max-w-[5rem]" title={getStatusLabel(history.toStatus)}>
+                    <span className="px-1.5 sm:px-2 py-0.5 bg-blue-600 text-white rounded font-medium text-center text-[10px] sm:text-xs leading-tight" title={getStatusLabel(history.toStatus)}>
                       {getStatusLabel(history.toStatus)}
                     </span>
                   </div>
 
                   {/* Comment */}
-                  {history.comment && (
-                    <div className="bg-amber-50 border-l-2 border-amber-400 rounded-r p-1.5 sm:p-2 text-xs text-gray-700">
-                      <p className="line-clamp-2 leading-snug">{history.comment}</p>
-                    </div>
-                  )}
+                  <div className="mt-auto">
+                    {history.comment && (
+                      <div className="bg-amber-50 border-l-2 border-amber-400 rounded-r p-1.5 sm:p-2 text-xs text-gray-700">
+                        <p className="line-clamp-3 leading-snug">{history.comment}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Arrow Connector */}
@@ -195,11 +197,11 @@ export default function ReportTimeline({ statusHistory }: ReportTimelineProps) {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1 text-xs">
-                        <span className="px-2 py-0.5 bg-gray-100 rounded text-gray-700 truncate max-w-[100px]" title={getStatusLabel(history.fromStatus)}>
+                        <span className="px-2 py-0.5 bg-gray-100 rounded text-gray-700 whitespace-nowrap" title={getStatusLabel(history.fromStatus)}>
                           {getStatusLabel(history.fromStatus)}
                         </span>
                         <ArrowRight className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded font-medium truncate max-w-[100px]" title={getStatusLabel(history.toStatus)}>
+                        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded font-medium whitespace-nowrap" title={getStatusLabel(history.toStatus)}>
                           {getStatusLabel(history.toStatus)}
                         </span>
                       </div>

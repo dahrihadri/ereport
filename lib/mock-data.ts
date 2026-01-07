@@ -6,6 +6,7 @@ import {
   Project,
   Report,
   ReportWithRelations,
+  Attachment,
 } from '@/types';
 
 // ============================================================================
@@ -521,13 +522,107 @@ export const mockReports: Report[] = [
 // REPORTS WITH RELATIONS
 // ============================================================================
 
+// Mock attachments for reports
+const mockAttachments: Attachment[] = [
+  {
+    id: 'att-1',
+    reportId: 'report-1',
+    fileName: 'Project_Overview.pdf',
+    fileSize: 2457600, // 2.4 MB
+    fileType: 'application/pdf',
+    filePath: '/uploads/Project_Overview.pdf',
+    uploadedByUserId: 'user-1',
+    uploadedAt: new Date('2025-01-03T10:30:00'),
+  },
+  {
+    id: 'att-2',
+    reportId: 'report-1',
+    fileName: 'Architecture_Diagram.png',
+    fileSize: 1536000, // 1.5 MB
+    fileType: 'image/png',
+    filePath: '/uploads/Architecture_Diagram.png',
+    uploadedByUserId: 'user-1',
+    uploadedAt: new Date('2025-01-03T11:00:00'),
+  },
+  {
+    id: 'att-3',
+    reportId: 'report-1',
+    fileName: 'Budget_Analysis.xlsx',
+    fileSize: 512000, // 500 KB
+    fileType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    filePath: '/uploads/Budget_Analysis.xlsx',
+    uploadedByUserId: 'user-1',
+    uploadedAt: new Date('2025-01-03T14:15:00'),
+  },
+  {
+    id: 'att-4',
+    reportId: 'report-2',
+    fileName: 'Network_Topology.pdf',
+    fileSize: 3145728, // 3 MB
+    fileType: 'application/pdf',
+    filePath: '/uploads/Network_Topology.pdf',
+    uploadedByUserId: 'user-2',
+    uploadedAt: new Date('2025-01-04T09:00:00'),
+  },
+  {
+    id: 'att-5',
+    reportId: 'report-2',
+    fileName: 'Site_Survey_Photos.zip',
+    fileSize: 8388608, // 8 MB
+    fileType: 'application/zip',
+    filePath: '/uploads/Site_Survey_Photos.zip',
+    uploadedByUserId: 'user-2',
+    uploadedAt: new Date('2025-01-04T10:30:00'),
+  },
+  {
+    id: 'att-6',
+    reportId: 'report-3',
+    fileName: 'Compliance_Checklist.docx',
+    fileSize: 204800, // 200 KB
+    fileType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    filePath: '/uploads/Compliance_Checklist.docx',
+    uploadedByUserId: 'user-3',
+    uploadedAt: new Date('2025-01-05T11:00:00'),
+  },
+  {
+    id: 'att-7',
+    reportId: 'report-4',
+    fileName: 'AI_Model_Results.pdf',
+    fileSize: 1843200, // 1.8 MB
+    fileType: 'application/pdf',
+    filePath: '/uploads/AI_Model_Results.pdf',
+    uploadedByUserId: 'user-4',
+    uploadedAt: new Date('2025-01-06T13:45:00'),
+  },
+  {
+    id: 'att-8',
+    reportId: 'report-4',
+    fileName: 'Training_Dataset.csv',
+    fileSize: 5242880, // 5 MB
+    fileType: 'text/csv',
+    filePath: '/uploads/Training_Dataset.csv',
+    uploadedByUserId: 'user-4',
+    uploadedAt: new Date('2025-01-06T14:00:00'),
+  },
+  {
+    id: 'att-9',
+    reportId: 'report-4',
+    fileName: 'Performance_Metrics.png',
+    fileSize: 819200, // 800 KB
+    fileType: 'image/png',
+    filePath: '/uploads/Performance_Metrics.png',
+    uploadedByUserId: 'user-4',
+    uploadedAt: new Date('2025-01-06T15:30:00'),
+  },
+];
+
 export const mockReportsWithRelations: ReportWithRelations[] = mockReports.map((report) => ({
   ...report,
   project: mockProjects.find((p) => p.id === report.projectId)!,
   createdBy: mockUsers.find((u) => u.id === report.createdByUserId)!,
   division: mockDivisions.find((d) => d.id === report.divisionId)!,
   sector: mockSectors.find((s) => s.id === report.sectorId)!,
-  attachments: [],
+  attachments: mockAttachments.filter((att) => att.reportId === report.id),
   commentsCount: Math.floor(Math.random() * 5),
 }));
 

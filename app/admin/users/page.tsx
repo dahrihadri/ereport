@@ -12,7 +12,9 @@ import {
 } from '@/lib/admin-mock-data';
 import UserTable from '@/components/admin/UserTable';
 import UserForm from '@/components/admin/UserForm';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search, Filter, FileSpreadsheet } from 'lucide-react';
+import { exportUsersToCSV } from '@/lib/export-utils';
+import { logAuditEvent, detectChanges } from '@/lib/audit-trail';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -71,28 +73,81 @@ export default function UsersPage() {
   };
 
   const handleSaveUser = (userData: Partial<User>) => {
+    // Mock current user (in real app, get from auth context)
+    const currentUser = { id: 'admin-1', name: 'System Admin' };
+
     if (selectedUser) {
       // Update existing user
+      const changes = detectChanges(selectedUser, userData);
       updateUser(selectedUser.id, userData);
+
+      logAuditEvent(
+        currentUser.id,
+        currentUser.name,
+        'UPDATE',
+        'USER',
+        selectedUser.id,
+        userData.name || selectedUser.name,
+        changes
+      );
     } else {
       // Create new user
-      createUser(userData as Omit<User, 'id' | 'createdAt' | 'updatedAt'>);
+      const newUser = createUser(userData as Omit<User, 'id' | 'createdAt' | 'updatedAt'>);
+
+      logAuditEvent(
+        currentUser.id,
+        currentUser.name,
+        'CREATE',
+        'USER',
+        newUser.id,
+        newUser.name
+      );
     }
     loadUsers();
     setIsFormOpen(false);
   };
 
   const handleDeleteUser = (userId: string) => {
+    const currentUser = { id: 'admin-1', name: 'System Admin' };
+    const user = users.find(u => u.id === userId);
+
     deleteUser(userId);
+
+    if (user) {
+      logAuditEvent(
+        currentUser.id,
+        currentUser.name,
+        'DELETE',
+        'USER',
+        userId,
+        user.name
+      );
+    }
+
     loadUsers();
   };
 
   const handleToggleActive = (userId: string, isActive: boolean) => {
+    const currentUser = { id: 'admin-1', name: 'System Admin' };
+    const user = users.find(u => u.id === userId);
+
     if (isActive) {
       activateUser(userId);
     } else {
       deactivateUser(userId);
     }
+
+    if (user) {
+      logAuditEvent(
+        currentUser.id,
+        currentUser.name,
+        isActive ? 'ACTIVATE' : 'DEACTIVATE',
+        'USER',
+        userId,
+        user.name
+      );
+    }
+
     loadUsers();
   };
 
@@ -115,13 +170,23 @@ export default function UsersPage() {
             Manage system users, roles, and organizational assignments
           </p>
         </div>
-        <button
-          onClick={handleCreateUser}
-          className="flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm sm:text-base whitespace-nowrap"
-        >
-          <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span>Create User</span>
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => exportUsersToCSV(filteredUsers)}
+            disabled={filteredUsers.length === 0}
+            className="flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm sm:text-base whitespace-nowrap disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            <FileSpreadsheet className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Export CSV</span>
+          </button>
+          <button
+            onClick={handleCreateUser}
+            className="flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm sm:text-base whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span>Create User</span>
+          </button>
+        </div>
       </div>
 
       {/* Stats */}

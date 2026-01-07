@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import CommentForm from './CommentForm';
+import { useToast } from './ui/ToastProvider';
 
 interface CommentItemProps {
   comment: Comment;
@@ -43,6 +44,7 @@ export default function CommentItem({
   const [isEditing, setIsEditing] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [editText, setEditText] = useState(comment.commentText);
+  const { confirm } = useToast();
 
   const user = getUserById(comment.userId);
   const isOwner = comment.userId === currentUserId;
@@ -65,8 +67,16 @@ export default function CommentItem({
     setIsEditing(false);
   };
 
-  const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this comment?')) {
+  const handleDelete = async () => {
+    const confirmed = await confirm({
+      title: 'Delete Comment',
+      message: 'Are you sure you want to delete this comment?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      variant: 'danger',
+    });
+
+    if (confirmed) {
       onDelete(comment.id);
     }
     setShowMenu(false);

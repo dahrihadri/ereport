@@ -2,8 +2,11 @@
 
 import { Sector } from '@/types';
 import { X } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { getAllUsers } from '@/lib/admin-mock-data';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { sectorFormSchema, type SectorFormData } from '@/lib/validations/admin-schemas';
 
 interface SectorFormProps {
   isOpen: boolean;
@@ -17,13 +20,33 @@ function SectorFormContent({ onClose, onSave, sector, isOpen }: SectorFormProps)
   const users = getAllUsers();
   const chiefs = users.filter((u) => u.role === 'CHIEF_OF_SECTOR');
 
-  // Initialize form data from sector prop
-  const [formData, setFormData] = useState({
-    code: sector?.code || '',
-    name: sector?.name || '',
-    description: sector?.description || '',
-    chiefUserId: sector?.chiefUserId || '',
+  // Initialize react-hook-form with Zod validation
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm<SectorFormData>({
+    resolver: zodResolver(sectorFormSchema),
+    defaultValues: {
+      code: sector?.code || '',
+      name: sector?.name || '',
+      description: sector?.description || '',
+      chiefOfSectorId: sector?.chiefUserId || '',
+    },
   });
+
+  // Reset form when sector changes or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      reset({
+        code: sector?.code || '',
+        name: sector?.name || '',
+        description: sector?.description || '',
+        chiefOfSectorId: sector?.chiefUserId || '',
+      });
+    }
+  }, [sector, isOpen, reset]);
 
   // Lock body scroll when form is open
   useEffect(() => {
@@ -39,12 +62,11 @@ function SectorFormContent({ onClose, onSave, sector, isOpen }: SectorFormProps)
     };
   }, [isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = (data: SectorFormData) => {
     onSave({
-      ...formData,
-      chiefUserId: formData.chiefUserId || undefined,
-      description: formData.description || undefined,
+      ...data,
+      chiefUserId: data.chiefOfSectorId || undefined,
+      description: data.description || undefined,
     });
   };
 
@@ -95,7 +117,7 @@ function SectorFormContent({ onClose, onSave, sector, isOpen }: SectorFormProps)
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex-1 overflow-y-auto p-4 sm:p-6">
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -103,12 +125,17 @@ function SectorFormContent({ onClose, onSave, sector, isOpen }: SectorFormProps)
               </label>
               <input
                 type="text"
-                value={formData.code}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                {...register('code')}
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                  errors.code
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-red-500'
+                }`}
                 placeholder="e.g., SEC-IT"
-                required
               />
+              {errors.code && (
+                <p className="mt-1 text-xs text-red-600">{errors.code.message}</p>
+              )}
             </div>
 
             <div>
@@ -117,12 +144,17 @@ function SectorFormContent({ onClose, onSave, sector, isOpen }: SectorFormProps)
               </label>
               <input
                 type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                {...register('name')}
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                  errors.name
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-red-500'
+                }`}
                 placeholder="e.g., Information Technology Sector"
-                required
               />
+              {errors.name && (
+                <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>
+              )}
             </div>
 
             <div>
@@ -130,12 +162,18 @@ function SectorFormContent({ onClose, onSave, sector, isOpen }: SectorFormProps)
                 Description
               </label>
               <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                {...register('description')}
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                  errors.description
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-red-500'
+                }`}
                 rows={3}
                 placeholder="Brief description of the sector..."
               />
+              {errors.description && (
+                <p className="mt-1 text-xs text-red-600">{errors.description.message}</p>
+              )}
             </div>
 
             <div>
@@ -143,9 +181,12 @@ function SectorFormContent({ onClose, onSave, sector, isOpen }: SectorFormProps)
                 Chief of Sector
               </label>
               <select
-                value={formData.chiefUserId}
-                onChange={(e) => setFormData({ ...formData, chiefUserId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                {...register('chiefOfSectorId')}
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                  errors.chiefOfSectorId
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-red-500'
+                }`}
               >
                 <option value="">Not assigned</option>
                 {chiefs.map((chief) => (
@@ -154,6 +195,9 @@ function SectorFormContent({ onClose, onSave, sector, isOpen }: SectorFormProps)
                   </option>
                 ))}
               </select>
+              {errors.chiefOfSectorId && (
+                <p className="mt-1 text-xs text-red-600">{errors.chiefOfSectorId.message}</p>
+              )}
               {chiefs.length === 0 && (
                 <p className="text-sm text-gray-500 mt-1">
                   No users with &quot;Chief of Sector&quot; role found
@@ -172,9 +216,16 @@ function SectorFormContent({ onClose, onSave, sector, isOpen }: SectorFormProps)
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors shadow-sm"
+                disabled={isSubmitting}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                {sector ? 'Save Changes' : 'Create Sector'}
+                {isSubmitting && (
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                )}
+                {isSubmitting ? 'Saving...' : (sector ? 'Save Changes' : 'Create Sector')}
               </button>
             </div>
           </div>

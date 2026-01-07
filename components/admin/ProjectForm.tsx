@@ -4,6 +4,9 @@ import { Project, ProjectStatus } from '@/types';
 import { X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getAllSectors, getAllDivisions, getDivisionsBySectorId } from '@/lib/admin-mock-data';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { projectFormSchema, type ProjectFormData } from '@/lib/validations/admin-schemas';
 
 interface ProjectFormProps {
   isOpen: boolean;
@@ -17,21 +20,34 @@ function ProjectFormContent({ onClose, onSave, project, isOpen }: ProjectFormPro
   const sectors = getAllSectors();
   const firstSector = sectors[0];
 
-  // Initialize form data from project prop
-  const [formData, setFormData] = useState({
-    code: project?.code || '',
-    name: project?.name || '',
-    description: project?.description || '',
-    sectorId: project?.sectorId || firstSector?.id || '',
-    divisionId: project?.divisionId || '',
-    status: (project?.status || 'active') as ProjectStatus,
-    startDate: project?.startDate
-      ? new Date(project.startDate).toISOString().split('T')[0]
-      : new Date().toISOString().split('T')[0],
-    endDate: project?.endDate
-      ? new Date(project.endDate).toISOString().split('T')[0]
-      : '',
+  // Initialize react-hook-form with Zod validation
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    watch,
+    setValue,
+    reset,
+  } = useForm<ProjectFormData>({
+    resolver: zodResolver(projectFormSchema),
+    defaultValues: {
+      code: project?.code || '',
+      name: project?.name || '',
+      description: project?.description || '',
+      sectorId: project?.sectorId || firstSector?.id || '',
+      divisionId: project?.divisionId || '',
+      status: (project?.status || 'active') as ProjectStatus,
+      startDate: project?.startDate
+        ? new Date(project.startDate).toISOString().split('T')[0]
+        : new Date().toISOString().split('T')[0],
+      endDate: project?.endDate
+        ? new Date(project.endDate).toISOString().split('T')[0]
+        : '',
+    },
   });
+
+  // Watch form values
+  const sectorId = watch('sectorId');
 
   const [availableDivisions, setAvailableDivisions] = useState(
     project?.sectorId
@@ -40,6 +56,26 @@ function ProjectFormContent({ onClose, onSave, project, isOpen }: ProjectFormPro
         ? getDivisionsBySectorId(firstSector.id)
         : getAllDivisions()
   );
+
+  // Reset form when project changes or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      reset({
+        code: project?.code || '',
+        name: project?.name || '',
+        description: project?.description || '',
+        sectorId: project?.sectorId || firstSector?.id || '',
+        divisionId: project?.divisionId || '',
+        status: (project?.status || 'active') as ProjectStatus,
+        startDate: project?.startDate
+          ? new Date(project.startDate).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0],
+        endDate: project?.endDate
+          ? new Date(project.endDate).toISOString().split('T')[0]
+          : '',
+      });
+    }
+  }, [project, isOpen, reset, firstSector?.id]);
 
   // Lock body scroll when form is open
   useEffect(() => {
@@ -55,18 +91,27 @@ function ProjectFormContent({ onClose, onSave, project, isOpen }: ProjectFormPro
     };
   }, [isOpen]);
 
-  const handleSectorChange = (sectorId: string) => {
-    setFormData({ ...formData, sectorId, divisionId: '' });
-    setAvailableDivisions(getDivisionsBySectorId(sectorId));
-  };
+  // Update available divisions when sector changes
+  useEffect(() => {
+    if (sectorId) {
+      setAvailableDivisions(getDivisionsBySectorId(sectorId));
+      // Reset division if it doesn't belong to new sector
+      const currentDivisionId = watch('divisionId');
+      const divisionBelongsToSector = getDivisionsBySectorId(sectorId).some(
+        d => d.id === currentDivisionId
+      );
+      if (!divisionBelongsToSector) {
+        setValue('divisionId', '');
+      }
+    }
+  }, [sectorId, setValue, watch]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = (data: ProjectFormData) => {
     onSave({
-      ...formData,
-      description: formData.description || undefined,
-      endDate: formData.endDate ? new Date(formData.endDate) : undefined,
-      startDate: new Date(formData.startDate),
+      ...data,
+      description: data.description || undefined,
+      endDate: data.endDate ? new Date(data.endDate) : undefined,
+      startDate: new Date(data.startDate),
     });
   };
 
@@ -124,7 +169,7 @@ function ProjectFormContent({ onClose, onSave, project, isOpen }: ProjectFormPro
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex-1 overflow-y-auto p-4 sm:p-6">
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -133,12 +178,17 @@ function ProjectFormContent({ onClose, onSave, project, isOpen }: ProjectFormPro
                 </label>
                 <input
                   type="text"
-                  value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                  {...register('code')}
+                  className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                    errors.code
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-red-500'
+                  }`}
                   placeholder="e.g., PROJ-2025-001"
-                  required
                 />
+                {errors.code && (
+                  <p className="mt-1 text-xs text-red-600">{errors.code.message}</p>
+                )}
               </div>
 
               <div>
@@ -146,10 +196,12 @@ function ProjectFormContent({ onClose, onSave, project, isOpen }: ProjectFormPro
                   Status *
                 </label>
                 <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as ProjectStatus })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
-                  required
+                  {...register('status')}
+                  className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                    errors.status
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-red-500'
+                  }`}
                 >
                   {statusOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -157,6 +209,9 @@ function ProjectFormContent({ onClose, onSave, project, isOpen }: ProjectFormPro
                     </option>
                   ))}
                 </select>
+                {errors.status && (
+                  <p className="mt-1 text-xs text-red-600">{errors.status.message}</p>
+                )}
               </div>
             </div>
 
@@ -166,12 +221,17 @@ function ProjectFormContent({ onClose, onSave, project, isOpen }: ProjectFormPro
               </label>
               <input
                 type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                {...register('name')}
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                  errors.name
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-red-500'
+                }`}
                 placeholder="e.g., Digital Transformation Initiative"
-                required
               />
+              {errors.name && (
+                <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>
+              )}
             </div>
 
             <div>
@@ -179,12 +239,18 @@ function ProjectFormContent({ onClose, onSave, project, isOpen }: ProjectFormPro
                 Description
               </label>
               <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                {...register('description')}
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                  errors.description
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-red-500'
+                }`}
                 rows={3}
                 placeholder="Brief description of the project..."
               />
+              {errors.description && (
+                <p className="mt-1 text-xs text-red-600">{errors.description.message}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -193,10 +259,12 @@ function ProjectFormContent({ onClose, onSave, project, isOpen }: ProjectFormPro
                   Sector *
                 </label>
                 <select
-                  value={formData.sectorId}
-                  onChange={(e) => handleSectorChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
-                  required
+                  {...register('sectorId')}
+                  className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                    errors.sectorId
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-red-500'
+                  }`}
                 >
                   <option value="">Select a sector</option>
                   {sectors.map((sector) => (
@@ -205,6 +273,9 @@ function ProjectFormContent({ onClose, onSave, project, isOpen }: ProjectFormPro
                     </option>
                   ))}
                 </select>
+                {errors.sectorId && (
+                  <p className="mt-1 text-xs text-red-600">{errors.sectorId.message}</p>
+                )}
               </div>
 
               <div>
@@ -212,11 +283,13 @@ function ProjectFormContent({ onClose, onSave, project, isOpen }: ProjectFormPro
                   Division *
                 </label>
                 <select
-                  value={formData.divisionId}
-                  onChange={(e) => setFormData({ ...formData, divisionId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
-                  required
-                  disabled={!formData.sectorId}
+                  {...register('divisionId')}
+                  className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                    errors.divisionId
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-red-500'
+                  }`}
+                  disabled={!sectorId}
                 >
                   <option value="">Select a division</option>
                   {availableDivisions.map((division) => (
@@ -225,7 +298,10 @@ function ProjectFormContent({ onClose, onSave, project, isOpen }: ProjectFormPro
                     </option>
                   ))}
                 </select>
-                {!formData.sectorId && (
+                {errors.divisionId && (
+                  <p className="mt-1 text-xs text-red-600">{errors.divisionId.message}</p>
+                )}
+                {!sectorId && (
                   <p className="text-sm text-gray-500 mt-1">Select a sector first</p>
                 )}
               </div>
@@ -238,11 +314,16 @@ function ProjectFormContent({ onClose, onSave, project, isOpen }: ProjectFormPro
                 </label>
                 <input
                   type="date"
-                  value={formData.startDate}
-                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
-                  required
+                  {...register('startDate')}
+                  className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                    errors.startDate
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-red-500'
+                  }`}
                 />
+                {errors.startDate && (
+                  <p className="mt-1 text-xs text-red-600">{errors.startDate.message}</p>
+                )}
               </div>
 
               <div>
@@ -251,11 +332,16 @@ function ProjectFormContent({ onClose, onSave, project, isOpen }: ProjectFormPro
                 </label>
                 <input
                   type="date"
-                  value={formData.endDate}
-                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
-                  min={formData.startDate}
+                  {...register('endDate')}
+                  className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                    errors.endDate
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-red-500'
+                  }`}
                 />
+                {errors.endDate && (
+                  <p className="mt-1 text-xs text-red-600">{errors.endDate.message}</p>
+                )}
               </div>
             </div>
 
@@ -270,9 +356,16 @@ function ProjectFormContent({ onClose, onSave, project, isOpen }: ProjectFormPro
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors shadow-sm"
+                disabled={isSubmitting}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                {project ? 'Save Changes' : 'Create Project'}
+                {isSubmitting && (
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                )}
+                {isSubmitting ? 'Saving...' : (project ? 'Save Changes' : 'Create Project')}
               </button>
             </div>
           </div>

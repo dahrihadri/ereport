@@ -140,7 +140,10 @@ export default function SummaryPage() {
               <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-5 md:p-6">
                 <div className="flex items-center justify-between mb-4 sm:mb-6">
                   <h3 className="text-lg sm:text-xl font-semibold text-gray-800">Status Overview</h3>
-                  <button className="text-xs text-blue-600 hover:text-blue-700 font-semibold transition-colors">
+                  <button
+                    className="text-xs text-blue-600 hover:text-blue-700 font-semibold transition-colors"
+                    onClick={() => window.location.href = '/reports'}
+                  >
                     View all
                   </button>
                 </div>

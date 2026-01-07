@@ -8,7 +8,7 @@ import FilterButton from '@/components/ui/FilterButton';
 import Pagination from '@/components/ui/Pagination';
 import { Task } from '@/types';
 import { Bell } from 'lucide-react';
-import { getUserById } from '@/lib/mock-data';
+import { getUserById, mockReportsWithRelations } from '@/lib/mock-data';
 
 type NotificationType = 'all' | 'success' | 'error' | 'info' | 'warning';
 
@@ -19,6 +19,7 @@ interface Notification {
   type: 'success' | 'error' | 'info' | 'warning';
   time: string;
   read: boolean;
+  reportId?: string;
   details?: {
     reportTitle?: string;
     assignedBy?: string;
@@ -27,98 +28,135 @@ interface Notification {
   };
 }
 
-// Extended mock notifications
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    title: 'Report Approved',
-    message: 'Your report "Q1 Financial Analysis" has been approved by Ahmad Faizal',
-    type: 'success',
-    time: '5 minutes ago',
-    read: false,
-    details: {
-      reportTitle: 'Q1 Financial Analysis',
-      assignedBy: 'Ahmad Faizal',
-      action: 'Approved',
-    },
-  },
-  {
-    id: '2',
-    title: 'New Comment',
-    message: 'Zurul Zahra commented on "Database Schema Implementation"',
-    type: 'info',
-    time: '1 hour ago',
-    read: false,
-    details: {
-      reportTitle: 'Database Schema Implementation',
-      assignedBy: 'Zurul Zahra',
-      action: 'Commented',
-    },
-  },
-  {
-    id: '3',
-    title: 'Report Rejected',
-    message: 'Your report "Market Research" needs revision. Please check the feedback.',
-    type: 'error',
-    time: '2 hours ago',
-    read: false,
-    details: {
-      reportTitle: 'Market Research',
-      action: 'Needs Revision',
-    },
-  },
-  {
-    id: '4',
-    title: 'Task Assigned',
-    message: 'You have been assigned to "API Development for Task Management"',
-    type: 'info',
-    time: '3 hours ago',
-    read: true,
-    details: {
-      reportTitle: 'API Development for Task Management',
-      assignedBy: 'Ahmad Faizal',
-      action: 'Assigned',
-    },
-  },
-  {
-    id: '5',
-    title: 'Deadline Approaching',
-    message: 'Report "User Authentication System" is due in 2 days',
-    type: 'warning',
-    time: '5 hours ago',
-    read: true,
-    details: {
-      reportTitle: 'User Authentication System',
-      dueDate: '2 days',
-      action: 'Deadline Alert',
-    },
-  },
-  {
-    id: '6',
-    title: 'Report Submitted',
-    message: 'Your report "Mobile App UI Design" has been submitted successfully',
-    type: 'success',
-    time: '1 day ago',
-    read: true,
-    details: {
-      reportTitle: 'Mobile App UI Design',
-      action: 'Submitted',
-    },
-  },
-  {
-    id: '7',
-    title: 'Review Required',
-    message: 'Please review "Cloud Migration Strategy" report',
-    type: 'info',
-    time: '1 day ago',
-    read: true,
-    details: {
-      reportTitle: 'Cloud Migration Strategy',
-      assignedBy: 'System',
-      action: 'Review Required',
-    },
-  },
-  {
+// Generate notifications from actual mock data
+const generateMockNotifications = (): Notification[] => {
+  const notifs: Notification[] = [];
+  const reports = mockReportsWithRelations;
+
+  // Report 1 - Approved
+  if (reports[0]) {
+    notifs.push({
+      id: '1',
+      title: 'Report Approved',
+      message: `Your report "${reports[0].title}" has been approved by ${reports[0].createdBy.name}`,
+      type: 'success',
+      time: '5 minutes ago',
+      read: false,
+      reportId: reports[0].id,
+      details: {
+        reportTitle: reports[0].title,
+        assignedBy: reports[0].createdBy.name,
+        action: 'Approved',
+      },
+    });
+  }
+
+  // Report 2 - New Comment
+  if (reports[1]) {
+    notifs.push({
+      id: '2',
+      title: 'New Comment',
+      message: `${reports[1].createdBy.name} commented on "${reports[1].title}"`,
+      type: 'info',
+      time: '1 hour ago',
+      read: false,
+      reportId: reports[1].id,
+      details: {
+        reportTitle: reports[1].title,
+        assignedBy: reports[1].createdBy.name,
+        action: 'Commented',
+      },
+    });
+  }
+
+  // Report 5 - Returned for Revision
+  if (reports[4]) {
+    notifs.push({
+      id: '3',
+      title: 'Report Returned for Revision',
+      message: `Your report "${reports[4].title}" needs revision. Please check the feedback.`,
+      type: 'error',
+      time: '2 hours ago',
+      read: false,
+      reportId: reports[4].id,
+      details: {
+        reportTitle: reports[4].title,
+        action: 'Needs Revision',
+      },
+    });
+  }
+
+  // Report 4 - Draft Reminder
+  if (reports[3]) {
+    notifs.push({
+      id: '4',
+      title: 'Draft Report Reminder',
+      message: `You have a draft report "${reports[3].title}" waiting for submission`,
+      type: 'info',
+      time: '3 hours ago',
+      read: true,
+      reportId: reports[3].id,
+      details: {
+        reportTitle: reports[3].title,
+        action: 'Draft Reminder',
+      },
+    });
+  }
+
+  // Report 3 - Awaiting Final Approval
+  if (reports[2]) {
+    notifs.push({
+      id: '5',
+      title: 'Report Awaiting Approval',
+      message: `Report "${reports[2].title}" is awaiting final approval`,
+      type: 'warning',
+      time: '5 hours ago',
+      read: true,
+      reportId: reports[2].id,
+      details: {
+        reportTitle: reports[2].title,
+        action: 'Awaiting Approval',
+      },
+    });
+  }
+
+  // Report 6 - Submitted
+  if (reports[5]) {
+    notifs.push({
+      id: '6',
+      title: 'Report Submitted',
+      message: `Your report "${reports[5].title}" has been submitted successfully`,
+      type: 'success',
+      time: '1 day ago',
+      read: true,
+      reportId: reports[5].id,
+      details: {
+        reportTitle: reports[5].title,
+        action: 'Submitted',
+      },
+    });
+  }
+
+  // Report 7 - Review Required
+  if (reports[6]) {
+    notifs.push({
+      id: '7',
+      title: 'Review Required',
+      message: `Please review "${reports[6].title}" report`,
+      type: 'info',
+      time: '1 day ago',
+      read: true,
+      reportId: reports[6].id,
+      details: {
+        reportTitle: reports[6].title,
+        assignedBy: 'System',
+        action: 'Review Required',
+      },
+    });
+  }
+
+  // System notification (no report)
+  notifs.push({
     id: '8',
     title: 'System Maintenance',
     message: 'Scheduled maintenance on Jan 20, 2025 from 2:00 AM to 4:00 AM',
@@ -129,34 +167,48 @@ const mockNotifications: Notification[] = [
       action: 'System Maintenance',
       dueDate: 'Jan 20, 2025',
     },
-  },
-  {
-    id: '9',
-    title: 'Report Approved',
-    message: 'Your report "Security Audit Results" has been approved by the DMD',
-    type: 'success',
-    time: '3 days ago',
-    read: true,
-    details: {
-      reportTitle: 'Security Audit Results',
-      assignedBy: 'DMD',
-      action: 'Approved',
-    },
-  },
-  {
-    id: '10',
-    title: 'Comment Reply',
-    message: 'Ahmad Faizal replied to your comment on "Infrastructure Upgrade"',
-    type: 'info',
-    time: '4 days ago',
-    read: true,
-    details: {
-      reportTitle: 'Infrastructure Upgrade',
-      assignedBy: 'Ahmad Faizal',
-      action: 'Replied',
-    },
-  },
-];
+  });
+
+  // Report 8 - Another Approved
+  if (reports[7]) {
+    notifs.push({
+      id: '9',
+      title: 'Report Approved',
+      message: `Your report "${reports[7].title}" has been approved by the DMD`,
+      type: 'success',
+      time: '3 days ago',
+      read: true,
+      reportId: reports[7].id,
+      details: {
+        reportTitle: reports[7].title,
+        assignedBy: 'DMD',
+        action: 'Approved',
+      },
+    });
+  }
+
+  // Report 1 - Comment Reply
+  if (reports[0]) {
+    notifs.push({
+      id: '10',
+      title: 'Comment Reply',
+      message: `${reports[0].createdBy.name} replied to your comment on "${reports[0].title}"`,
+      type: 'info',
+      time: '4 days ago',
+      read: true,
+      reportId: reports[0].id,
+      details: {
+        reportTitle: reports[0].title,
+        assignedBy: reports[0].createdBy.name,
+        action: 'Replied',
+      },
+    });
+  }
+
+  return notifs;
+};
+
+const mockNotifications: Notification[] = generateMockNotifications();
 
 export default function NotificationsPage() {
   const router = useRouter();
@@ -214,10 +266,9 @@ export default function NotificationsPage() {
 
   const handleNotificationClick = (id: string) => {
     const notification = notifications.find(n => n.id === id);
-    if (notification && notification.details?.reportTitle) {
-      // Navigate to report details page
-      // Using notification ID as report ID for now (in production, use actual reportId from notification.details)
-      router.push(`/reports/${id}`);
+    if (notification && notification.reportId) {
+      // Navigate to report details page using the actual reportId
+      router.push(`/reports/${notification.reportId}`);
     }
   };
   const handleCreateReport = () => {  };

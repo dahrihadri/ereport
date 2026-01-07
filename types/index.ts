@@ -231,9 +231,6 @@ export type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
 
 export type CompletionLevel = 'not_started' | 'started' | 'in_progress' | 'nearly_complete' | 'complete';
 
-/**
- * @deprecated Use Report instead
- */
 export interface Task {
   id: string;
   title: string;
@@ -269,45 +266,6 @@ export interface ReportWithRelations extends Report {
   latestComment?: Comment;
 }
 
-/**
- * DashboardStats - Statistics for dashboard
- */
-export interface DashboardStats {
-  totalReports: number;
-  draftReports: number;
-  pendingReviews: number;
-  approvedReports: number;
-  returnedReports: number;
-  myReports: number;
-  reportsThisMonth: number;
-  averageApprovalTime?: number; // In days
-}
-
-/**
- * ReportFilters - Filters for report list
- */
-export interface ReportFilters {
-  projectId?: string;
-  sectorId?: string;
-  divisionId?: string;
-  status?: ReportStatus;
-  priority?: ReportPriority;
-  category?: ReportCategory;
-  createdByUserId?: string;
-  dateFrom?: Date;
-  dateTo?: Date;
-  searchQuery?: string;
-}
-
-/**
- * WorkflowAction - Allowed actions for current user on a report
- */
-export interface WorkflowAction {
-  action: 'submit' | 'approve' | 'return' | 'comment' | 'edit' | 'cancel';
-  label: string;
-  requiresComment: boolean;
-  nextStatus: ReportStatus;
-}
 
 // ============================================================================
 // PERMISSIONS & AUTHORIZATION

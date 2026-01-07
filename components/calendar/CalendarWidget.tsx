@@ -10,10 +10,11 @@ import { AnimatePresence, motion } from 'framer-motion';
 interface CalendarWidgetProps {
   tasks: Task[];
   onDateClick?: (date: Date) => void;
+  onTaskClick?: (task: Task) => void;
   selectedTask?: Task | null;
 }
 
-export default function CalendarWidget({ tasks, onDateClick, selectedTask }: CalendarWidgetProps) {
+export default function CalendarWidget({ tasks, onDateClick, onTaskClick, selectedTask }: CalendarWidgetProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'calendar' | 'timeline'>('calendar');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -138,7 +139,11 @@ export default function CalendarWidget({ tasks, onDateClick, selectedTask }: Cal
       const isToday = date.getTime() === today.getTime();
       const hasSelectedTask = selectedTask && tasksOnDate.some(t => t.id === selectedTask.id);
 
-      const handleDateClick = () => {
+      const handleDateClick = (e: React.MouseEvent) => {
+        // Only handle cell clicks, not task bar clicks
+        if ((e.target as HTMLElement).closest('button')) {
+          return;
+        }
         if (tasksOnDate.length > 0) {
           setSelectedDate(date);
           setShowTaskSheet(true);
@@ -172,9 +177,9 @@ export default function CalendarWidget({ tasks, onDateClick, selectedTask }: Cal
           </div>
 
           {/* Task list - Simple dots on mobile, full on desktop */}
-          <div className="px-0.5 sm:px-1 pb-0.5 sm:pb-1 pointer-events-none">
+          <div className="px-0.5 sm:px-1 pb-0.5 sm:pb-1">
             {/* Mobile: Show only dots */}
-            <div className="sm:hidden flex flex-wrap gap-0.5">
+            <div className="sm:hidden flex flex-wrap gap-0.5 pointer-events-none">
               {tasksOnDate.slice(0, 5).map(task => (
                 <div
                   key={task.id}
@@ -189,17 +194,17 @@ export default function CalendarWidget({ tasks, onDateClick, selectedTask }: Cal
             </div>
 
             {/* Desktop: Show task bars */}
-            <div className="hidden sm:block space-y-0.5 pointer-events-auto">
+            <div className="hidden sm:block space-y-0.5">
               {tasksOnDate.slice(0, 3).map(task => (
                 <button
                   key={task.id}
                   onClick={(e) => {
                     e.stopPropagation();
-                    onDateClick?.(new Date(task.startDate));
+                    onTaskClick?.(task);
                   }}
                   className={`w-full text-left px-1.5 py-1 rounded-md text-[9px] md:text-[10px] truncate transition-all shadow-sm hover:shadow-md ${
                     getColorByPriority(task.priority)
-                  } text-white font-medium relative group/task`}
+                  } text-white font-medium relative group/task z-10`}
                   title={task.title}
                 >
                   <div className="flex items-center gap-1">
@@ -292,15 +297,18 @@ export default function CalendarWidget({ tasks, onDateClick, selectedTask }: Cal
                     </div>
                   </div>
                   <div className="relative h-6 sm:h-8 bg-gray-100 rounded-md sm:rounded-lg overflow-hidden">
-                    <div
-                      className={`absolute h-full ${getColorByPriority(task.priority)} rounded-md sm:rounded-lg transition-all cursor-pointer hover:opacity-90 touch-manipulation active:scale-[0.98] flex items-center px-1.5 sm:px-2 ${isSelected ? 'shadow-lg' : ''}`}
+                    <button
+                      className={`absolute h-full ${getColorByPriority(task.priority)} rounded-md sm:rounded-lg transition-all hover:opacity-90 touch-manipulation active:scale-[0.98] flex items-center px-1.5 sm:px-2 ${isSelected ? 'shadow-lg' : ''}`}
                       style={position}
-                      onClick={() => onDateClick?.(new Date(task.startDate))}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onTaskClick?.(task);
+                      }}
                     >
                       <span className="text-[9px] sm:text-xs text-white font-medium truncate">
                         {new Date(task.startDate).getDate()} - {new Date(task.endDate).getDate()}
                       </span>
-                    </div>
+                    </button>
                   </div>
                   <div className="flex items-center gap-1.5 sm:gap-2 mt-1">
                     <span className={`text-[9px] sm:text-xs ${isSelected ? 'text-blue-600' : 'text-gray-500'}`}>
@@ -446,7 +454,7 @@ export default function CalendarWidget({ tasks, onDateClick, selectedTask }: Cal
               <div
                 key={task.id}
                 className="flex items-start gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-md sm:rounded-lg bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-all cursor-pointer touch-manipulation active:scale-[0.98]"
-                onClick={() => onDateClick?.(new Date(task.startDate))}
+                onClick={() => onTaskClick?.(task)}
               >
                 <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${getColorByPriority(task.priority)} mt-0.5 sm:mt-1 md:mt-1.5 flex-shrink-0`} />
                 <div className="flex-1 min-w-0">
@@ -486,8 +494,13 @@ export default function CalendarWidget({ tasks, onDateClick, selectedTask }: Cal
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             className="sm:hidden fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl z-50 max-h-[80vh] flex flex-col"
           >
+            {/* Drag Handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-12 h-1 bg-gray-300 rounded-full"></div>
+            </div>
+
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
               <div>
                 <h3 className="text-lg font-bold text-gray-900">
                   {selectedDate.toLocaleDateString('en-MY', {
@@ -500,19 +513,19 @@ export default function CalendarWidget({ tasks, onDateClick, selectedTask }: Cal
               </div>
               <button
                 onClick={() => setShowTaskSheet(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors touch-manipulation"
               >
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
             {/* Task List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-3" style={{ WebkitOverflowScrolling: 'touch' }}>
               {selectedDateTasks.map(task => (
                 <button
                   key={task.id}
                   onClick={() => {
-                    onDateClick?.(new Date(task.startDate));
+                    onTaskClick?.(task);
                     setShowTaskSheet(false);
                   }}
                   className="w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-blue-300 active:border-blue-500 transition-all bg-white shadow-sm active:shadow-md"

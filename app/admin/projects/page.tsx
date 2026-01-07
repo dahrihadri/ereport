@@ -10,9 +10,11 @@ import {
   getAllSectors,
   getAllDivisions,
 } from '@/lib/admin-mock-data';
-import { Plus, Edit2, Briefcase, Search, Filter } from 'lucide-react';
+import { Plus, Edit2, Briefcase, Search, Filter, FileSpreadsheet } from 'lucide-react';
 import ProjectForm from '@/components/admin/ProjectForm';
 import DeleteButton from '@/components/admin/DeleteButton';
+import { exportProjectsToCSV } from '@/lib/export-utils';
+import { logAuditEvent, detectChanges } from '@/lib/audit-trail';
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>(getAllProjects());
@@ -63,10 +65,32 @@ export default function ProjectsPage() {
   };
 
   const handleSaveProject = (projectData: Partial<Project>) => {
+    const currentUser = { id: 'admin-1', name: 'System Admin' };
+
     if (selectedProject) {
+      const changes = detectChanges(selectedProject, projectData);
       updateProject(selectedProject.id, projectData);
+
+      logAuditEvent(
+        currentUser.id,
+        currentUser.name,
+        'UPDATE',
+        'PROJECT',
+        selectedProject.id,
+        projectData.name || selectedProject.name,
+        changes
+      );
     } else {
-      createProject(projectData as Omit<Project, 'id' | 'createdAt' | 'updatedAt'>);
+      const newProject = createProject(projectData as Omit<Project, 'id' | 'createdAt' | 'updatedAt'>);
+
+      logAuditEvent(
+        currentUser.id,
+        currentUser.name,
+        'CREATE',
+        'PROJECT',
+        newProject.id,
+        newProject.name
+      );
     }
     loadProjects();
     setIsFormOpen(false);
@@ -74,7 +98,22 @@ export default function ProjectsPage() {
 
   const handleDeleteProject = async (projectId: string): Promise<boolean> => {
     try {
+      const currentUser = { id: 'admin-1', name: 'System Admin' };
+      const project = projects.find(p => p.id === projectId);
+
       deleteProject(projectId);
+
+      if (project) {
+        logAuditEvent(
+          currentUser.id,
+          currentUser.name,
+          'DELETE',
+          'PROJECT',
+          projectId,
+          project.name
+        );
+      }
+
       loadProjects();
       return true;
     } catch (error) {
@@ -114,13 +153,23 @@ export default function ProjectsPage() {
             Manage projects across all sectors and divisions
           </p>
         </div>
-        <button
-          onClick={handleCreateProject}
-          className="flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm sm:text-base whitespace-nowrap"
-        >
-          <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span>Create Project</span>
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => exportProjectsToCSV(filteredProjects)}
+            disabled={filteredProjects.length === 0}
+            className="flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm sm:text-base whitespace-nowrap disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            <FileSpreadsheet className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Export CSV</span>
+          </button>
+          <button
+            onClick={handleCreateProject}
+            className="flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm sm:text-base whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span>Create Project</span>
+          </button>
+        </div>
       </div>
 
       {/* Stats */}

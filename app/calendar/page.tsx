@@ -219,6 +219,7 @@ export default function CalendarPage() {
               <CalendarWidget
                 tasks={filteredTasks}
                 onDateClick={handleDateClick}
+                onTaskClick={handleTaskClick}
                 selectedTask={highlightedTaskId ? filteredTasks.find(t => t.id === highlightedTaskId) || null : null}
               />
             </div>

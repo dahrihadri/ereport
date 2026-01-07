@@ -2,8 +2,11 @@
 
 import { Division } from '@/types';
 import { X } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { getAllSectors, getAllUsers } from '@/lib/admin-mock-data';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { divisionFormSchema, type DivisionFormData } from '@/lib/validations/admin-schemas';
 
 interface DivisionFormProps {
   isOpen: boolean;
@@ -18,14 +21,38 @@ function DivisionFormContent({ onClose, onSave, division, isOpen }: DivisionForm
   const users = getAllUsers();
   const hods = users.filter((u) => u.role === 'HEAD_OF_DIVISION');
 
-  // Initialize form data from division prop
-  const [formData, setFormData] = useState({
-    code: division?.code || '',
-    name: division?.name || '',
-    description: division?.description || '',
-    sectorId: division?.sectorId || sectors[0]?.id || '',
-    hodUserId: division?.hodUserId || '',
+  // Memoize the default sector ID to prevent unnecessary resets
+  const defaultSectorId = useMemo(() => sectors[0]?.id || '', [sectors]);
+
+  // Initialize react-hook-form with Zod validation
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm<DivisionFormData>({
+    resolver: zodResolver(divisionFormSchema),
+    defaultValues: {
+      code: division?.code || '',
+      name: division?.name || '',
+      description: division?.description || '',
+      sectorId: division?.sectorId || defaultSectorId,
+      headOfDivisionId: division?.hodUserId || '',
+    },
   });
+
+  // Reset form when division changes or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      reset({
+        code: division?.code || '',
+        name: division?.name || '',
+        description: division?.description || '',
+        sectorId: division?.sectorId || defaultSectorId,
+        headOfDivisionId: division?.hodUserId || '',
+      });
+    }
+  }, [division, isOpen, reset, defaultSectorId]);
 
   // Lock body scroll when form is open
   useEffect(() => {
@@ -41,12 +68,11 @@ function DivisionFormContent({ onClose, onSave, division, isOpen }: DivisionForm
     };
   }, [isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = (data: DivisionFormData) => {
     onSave({
-      ...formData,
-      hodUserId: formData.hodUserId || undefined,
-      description: formData.description || undefined,
+      ...data,
+      hodUserId: data.headOfDivisionId || undefined,
+      description: data.description || undefined,
     });
   };
 
@@ -97,7 +123,7 @@ function DivisionFormContent({ onClose, onSave, division, isOpen }: DivisionForm
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex-1 overflow-y-auto p-4 sm:p-6">
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -105,12 +131,17 @@ function DivisionFormContent({ onClose, onSave, division, isOpen }: DivisionForm
               </label>
               <input
                 type="text"
-                value={formData.code}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                {...register('code')}
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                  errors.code
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-red-500'
+                }`}
                 placeholder="e.g., DIV-IT-DEV"
-                required
               />
+              {errors.code && (
+                <p className="mt-1 text-xs text-red-600">{errors.code.message}</p>
+              )}
             </div>
 
             <div>
@@ -119,12 +150,17 @@ function DivisionFormContent({ onClose, onSave, division, isOpen }: DivisionForm
               </label>
               <input
                 type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                {...register('name')}
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                  errors.name
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-red-500'
+                }`}
                 placeholder="e.g., Software Development Division"
-                required
               />
+              {errors.name && (
+                <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>
+              )}
             </div>
 
             <div>
@@ -132,12 +168,18 @@ function DivisionFormContent({ onClose, onSave, division, isOpen }: DivisionForm
                 Description
               </label>
               <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                {...register('description')}
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                  errors.description
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-red-500'
+                }`}
                 rows={3}
                 placeholder="Brief description of the division..."
               />
+              {errors.description && (
+                <p className="mt-1 text-xs text-red-600">{errors.description.message}</p>
+              )}
             </div>
 
             <div>
@@ -145,10 +187,12 @@ function DivisionFormContent({ onClose, onSave, division, isOpen }: DivisionForm
                 Parent Sector *
               </label>
               <select
-                value={formData.sectorId}
-                onChange={(e) => setFormData({ ...formData, sectorId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
-                required
+                {...register('sectorId')}
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                  errors.sectorId
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-red-500'
+                }`}
               >
                 <option value="">Select a sector</option>
                 {sectors.map((sector) => (
@@ -157,6 +201,9 @@ function DivisionFormContent({ onClose, onSave, division, isOpen }: DivisionForm
                   </option>
                 ))}
               </select>
+              {errors.sectorId && (
+                <p className="mt-1 text-xs text-red-600">{errors.sectorId.message}</p>
+              )}
             </div>
 
             <div>
@@ -164,9 +211,12 @@ function DivisionFormContent({ onClose, onSave, division, isOpen }: DivisionForm
                 Head of Division
               </label>
               <select
-                value={formData.hodUserId}
-                onChange={(e) => setFormData({ ...formData, hodUserId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                {...register('headOfDivisionId')}
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 ${
+                  errors.headOfDivisionId
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:ring-red-500'
+                }`}
               >
                 <option value="">Not assigned</option>
                 {hods.map((hod) => (
@@ -175,6 +225,9 @@ function DivisionFormContent({ onClose, onSave, division, isOpen }: DivisionForm
                   </option>
                 ))}
               </select>
+              {errors.headOfDivisionId && (
+                <p className="mt-1 text-xs text-red-600">{errors.headOfDivisionId.message}</p>
+              )}
               {hods.length === 0 && (
                 <p className="text-sm text-gray-500 mt-1">
                   No users with &quot;Head of Division&quot; role found
@@ -193,9 +246,16 @@ function DivisionFormContent({ onClose, onSave, division, isOpen }: DivisionForm
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors shadow-sm"
+                disabled={isSubmitting}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 transition-colors shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                {division ? 'Save Changes' : 'Create Division'}
+                {isSubmitting && (
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                )}
+                {isSubmitting ? 'Saving...' : (division ? 'Save Changes' : 'Create Division')}
               </button>
             </div>
           </div>

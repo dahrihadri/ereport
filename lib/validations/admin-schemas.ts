@@ -28,11 +28,11 @@ export const userFormSchema = z.object({
     message: 'Please select a valid role'
   }),
 
-  sectorIds: z.array(z.string()).default([]),
+  sectorIds: z.array(z.string()).optional().default([]),
 
-  divisionIds: z.array(z.string()).default([]),
+  divisionIds: z.array(z.string()).optional().default([]),
 
-  isActive: z.boolean().default(true),
+  isActive: z.boolean().optional().default(true),
 });
 
 export type UserFormData = z.infer<typeof userFormSchema>;

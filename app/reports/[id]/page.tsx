@@ -25,10 +25,15 @@ import {
   Clock,
   History,
   Activity,
+  Paperclip,
+  Upload,
+  Download,
+  File,
+  Image as ImageIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 
-type TabType = 'details' | 'timeline' | 'versions' | 'activity';
+type TabType = 'details' | 'timeline' | 'versions' | 'activity' | 'attachments';
 
 export default function ReportDetailPage() {
   const params = useParams();
@@ -257,6 +262,7 @@ export default function ReportDetailPage() {
     { id: 'timeline' as TabType, label: 'Timeline', icon: Clock },
     { id: 'versions' as TabType, label: 'Versions', icon: History },
     { id: 'activity' as TabType, label: 'Activity', icon: Activity },
+    { id: 'attachments' as TabType, label: 'Attachments', icon: Paperclip },
   ];
 
   return (
@@ -271,13 +277,13 @@ export default function ReportDetailPage() {
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {/* Back Button */}
-        <Link
-          href="/reports"
+        <button
+          onClick={() => router.back()}
           className="inline-flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-600 hover:text-blue-600 mb-3 sm:mb-4 transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          <span>Back to Reports</span>
-        </Link>
+          <span>Back</span>
+        </button>
 
         {/* Header */}
         <motion.div
@@ -510,6 +516,101 @@ export default function ReportDetailPage() {
                   comments={comments}
                   versions={mockVersions}
                 />
+              </motion.div>
+            )}
+
+            {/* Attachments Tab */}
+            {activeTab === 'attachments' && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
+                {/* Attachments Header */}
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-4 border-2 border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Paperclip className="w-5 h-5 text-blue-600" />
+                      <h3 className="text-lg font-bold text-gray-800">
+                        Report Attachments ({report.attachments?.length || 0})
+                      </h3>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Attachments List */}
+                {report.attachments && report.attachments.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {report.attachments.map((attachment) => {
+                      const getFileIcon = (fileType: string) => {
+                        if (fileType.startsWith('image/')) return ImageIcon;
+                        if (fileType.includes('pdf')) return FileText;
+                        return File;
+                      };
+
+                      const formatFileSize = (bytes: number): string => {
+                        if (bytes < 1024) return bytes + ' B';
+                        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+                        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+                      };
+
+                      const FileIcon = getFileIcon(attachment.fileType);
+                      const uploadedBy = getUserById(attachment.uploadedByUserId);
+
+                      return (
+                        <div
+                          key={attachment.id}
+                          className="bg-white border-2 border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-lg transition-all group"
+                        >
+                          <div className="flex items-start gap-3 mb-3">
+                            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <FileIcon className="w-6 h-6 text-blue-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-gray-800 truncate mb-1">
+                                {attachment.fileName}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {formatFileSize(attachment.fileSize)}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2 mb-3 text-xs text-gray-600">
+                            <div className="flex items-center gap-1.5">
+                              <User className="w-3.5 h-3.5" />
+                              <span>{uploadedBy?.name || 'Unknown'}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <Calendar className="w-3.5 h-3.5" />
+                              <span>{new Date(attachment.uploadedAt).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              // TODO: Implement download
+                              console.log('Download:', attachment.fileName);
+                            }}
+                            className="w-full px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2 text-sm font-medium"
+                          >
+                            <Download className="w-4 h-4" />
+                            <span>Download</span>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-gray-50 rounded-xl">
+                    <Paperclip className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500 text-sm mb-2">No attachments found</p>
+                    <p className="text-gray-400 text-xs">
+                      Attachments can be added when editing the report
+                    </p>
+                  </div>
+                )}
               </motion.div>
             )}
           </div>
